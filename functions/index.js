@@ -4,9 +4,13 @@ const functions = require('firebase-functions');
 
 admin.initializeApp(functions.config().firebase);
 
+const config = functions.config();
+
 exports.webhook = functions.https.onRequest((req, res) => {
   const credentials = auth(req);
-  if (!credentials || credentials.name !== 'username' || credentials.pass !== 'password') {
+  if (!credentials
+    || credentials.name !== config.apiai.username
+    || credentials.pass !== config.apiai.password) {
     console.log('Incorrect authentication header');
     console.log(credentials);
     res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
