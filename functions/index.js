@@ -84,21 +84,35 @@ exports.sendToFb = functions.https.onRequest((req, res) => {
     console.log('Config is not properly set');
     return res.send(401);
   }
-  const fb_access_token = config.facebook.access_token;
-  // TODO: Get all subscribed users (not only me).
-  // TODO: Also make token on IFTTT to be more secure.
-  const url = `https://graph.facebook.com/v2.6/me/messages?access_token=${fb_access_token}`;
-  const tweet = req.body;
-  axios.post(url,
-    {
-      recipient: {
-        id: '',
-      },
-      message: {
-        text: JSON.stringify(tweet),
-      },
-    })
-    .then((postRes) => {
-      return res.send('success');
-    });
+  const pageId = config.facebook.page_id;
+  const fbAccessToken = config.facebook.access_token;
+  const url = `https://graph.facebook.com/v2.6/me/messages?access_token=${fbAccessToken}`;
+
+  const IFTTTData = req.body;
+  if (IFTTTData.access_token !== config.ifttt.access_token) {
+    console.log('IFTTT token is incorrect!');
+    return res.send(401);
+  }
+
+  // Get all subscribed users
+  const tweet = IFTTTData.tweet;
+  admin.database().ref(`${pageId}`).once('value').then((snapshot) => {
+    const allUsers = snapshot.val();
+    const replyObj = {
+      recipient: { id: 'some_id' },
+      message: { text: JSON.stringify(tweet, null, 2) },
+    };
+    // Create axios post for each user.
+    const requests = Object.keys(allUsers).reduce((result, id) => {
+      if (allUsers[id].subscription) {
+        const newReply = Object.assign(replyObj, { recipient: { id } });
+        return [...result, axios.post(url, newReply)];
+      }
+      return result;
+    }, []);
+    return axios.all(requests);
+  })
+  .then((allResponses) => {
+    return res.send('success');
+  });
 });
