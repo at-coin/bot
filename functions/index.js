@@ -39,14 +39,66 @@ exports.webhook = functions.https.onRequest((req, res) => {
   const apiAiInput = req.body.result;
   const action = apiAiInput.action;
   const contexts = apiAiInput.contexts;
+  let text = 'default text';
+  const userId = orgInput.data.sender.id;
+  const pageId = orgInput.data.recipient.id;
+  const userRoutingOnDb = `/${pageId}/${userId}`;
+  switch(action) {
+    case 'getOmgToThb':
+      bxApi.getOmgToThb().then((result) => {
+        text = JSON.stringify(result, null, 2);
+        return res.json({
+          speech: text,
+          displayText: text,
+          contextOut: contexts,
+          source: 'AtCoinWebhook',
+        });
+      });
+      break;
+    case 'subscribe':
+      text = 'Successfully subscribed to news';
+      admin.database().ref(`${userRoutingOnDb}/subscription`).set(true).then(snapshot => {
+        return res.json({
+          speech: text,
+          displayText: text,
+          contextOut: contexts,
+          source: 'AtCoinWebhook',
+        });
+      });
+      break;
+    default:
+      text = 'No matching action';
+      return res.json({
+        speech: text,
+        displayText: text,
+        contextOut: contexts,
+        source: 'AtCoinWebhook',
+      });
+  }
+});
 
-  bxApi.getOmgToThb().then((result) => {
-    const text = JSON.stringify(result, null, 2);
-    return res.json({
-      speech: text,
-      displayText: text,
-      contextOut: contexts,
-      source: 'AtCoinWebhook',
+exports.sendToFb = functions.https.onRequest((req, res) => {
+  if (!config.facebook ||
+      !config.facebook.access_token ||
+      !config.facebook.page_id) {
+    console.log('Config is not properly set');
+    return res.send(401);
+  }
+  const fb_access_token = config.facebook.access_token;
+  // TODO: Get all subscribed users (not only me).
+  // TODO: Also make token on IFTTT to be more secure.
+  const url = `https://graph.facebook.com/v2.6/me/messages?access_token=${fb_access_token}`;
+  const tweet = req.body;
+  axios.post(url,
+    {
+      recipient: {
+        id: '',
+      },
+      message: {
+        text: JSON.stringify(tweet),
+      },
+    })
+    .then((postRes) => {
+      return res.send('success');
     });
-  });
 });
