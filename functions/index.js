@@ -1,24 +1,22 @@
 const admin = require('firebase-admin');
 const auth = require('basic-auth');
 const axios = require('axios');
+const BxApi = require('./bx-api');
+const CoinbaseApi = require('coinbase');
 const functions = require('firebase-functions');
 
 const config = functions.config();
 
+const bx = new BxApi({
+  apiKey: config.bx.api_key,
+  apiSecret: config.bx.api_secret,
+});
+const coinbase = new CoinbaseApi.Client({
+  apiKey: config.coinbase.api_key,
+  apiSecret: config.coinbase.api_secret,
+});
+
 admin.initializeApp(config.firebase);
-
-class BxApi {
-  constructor() {}
-  getOmgToThb() {
-    const url = 'https://bx.in.th/api/';
-    return axios.get(url)
-      .then((res) => {
-        return res.data['26'];
-      });
-  }
-}
-
-const bxApi = new BxApi();
 
 exports.webhook = functions.https.onRequest((req, res) => {
   const credentials = auth(req);
@@ -44,9 +42,38 @@ exports.webhook = functions.https.onRequest((req, res) => {
   const pageId = orgInput.data.recipient.id;
   const userRoutingOnDb = `/${pageId}/${userId}`;
   switch(action) {
+    case 'getEth':
+      coinbase.getBuyPrice({currencyPair: 'BTC-USD'}, (err, cbObj) => {
+        Promise.all([
+          bx.getEthToThb(),
+        ]).then(values => {
+          const bxObj = values[0];
+          text = `The latest ETH prices are:\n`
+            + `BX - ${values[0].last_price} thb/eth\n`
+            + `Coinbase - ${cbObj.data.amount} usd/eth\n`;
+          return res.json({
+            speech: text,
+            displayText: text,
+            contextOut: contexts,
+            source: 'AtCoinWebhook',
+          });
+        });
+      });
+      break;
     case 'getOmgToThb':
-      bxApi.getOmgToThb().then((result) => {
+      bx.getOmgToThb().then((result) => {
         text = JSON.stringify(result, null, 2);
+        return res.json({
+          speech: text,
+          displayText: text,
+          contextOut: contexts,
+          source: 'AtCoinWebhook',
+        });
+      });
+      break;
+    case 'getOmgToThbOnlyPrice':
+      bx.getOmgToThbOnlyPrice().then((result) => {
+        text = `The lastest price is ${result} Baht/OMG.`;
         return res.json({
           speech: text,
           displayText: text,
