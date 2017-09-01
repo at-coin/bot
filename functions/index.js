@@ -42,6 +42,18 @@ exports.webhook = functions.https.onRequest((req, res) => {
   const pageId = orgInput.data.recipient.id;
   const userRoutingOnDb = `/${pageId}/${userId}`;
   switch(action) {
+    case 'getBxTransaction':
+      bx.getAllTransaction()
+        .then(result => {
+          text = 'Successfully get transaction data';
+          return res.json({
+            speech: text,
+            displayText: text,
+            contextOut: contexts,
+            source: 'AtCoinWebhook',
+          });
+        });
+      break;
     case 'getEth':
       coinbase.getBuyPrice({currencyPair: 'BTC-USD'}, (err, cbObj) => {
         Promise.all([
