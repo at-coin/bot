@@ -4,6 +4,7 @@ const axios = require('axios');
 const BxApi = require('./bx-api');
 const CoinbaseApi = require('coinbase');
 const functions = require('firebase-functions');
+const fx = require('money');
 
 const config = functions.config();
 
@@ -14,6 +15,15 @@ const coinbase = new CoinbaseApi.Client({
 });
 
 admin.initializeApp(config.firebase);
+
+// Convenient function to get exchange rate.
+const getExchangeRates = () => axios.get('http://api.fixer.io/latest?base=THB').then(res => {
+  fx.base = res.data.base;
+  fx.rates = res.data.rates;
+  const SGD = fx(1).from('SGD').to('THB');
+  const USD = fx(1).from('USD').to('THB');
+  return {SGD, USD};
+});
 
 exports.webhook = functions.https.onRequest((req, res) => {
   const credentials = auth(req);
@@ -39,6 +49,18 @@ exports.webhook = functions.https.onRequest((req, res) => {
   const pageId = orgInput.data.recipient.id;
   const userRoutingOnDb = `/${pageId}/${userId}`;
   switch(action) {
+    case 'getExchangeRates':
+      getExchangeRates().then(rates => {
+        text = `USD: ${rates.USD}\n`
+          + `SGD: ${rates.SGD}`;
+        return res.json({
+          speech: text,
+          displayText: text,
+          contextOut: contexts,
+          source: 'AtCoinWebhook',
+        });
+      });
+      break;
     case 'calculateBxOmgProfit':
       Promise.all([
         bx.getAllTransactions(),
@@ -71,14 +93,19 @@ exports.webhook = functions.https.onRequest((req, res) => {
         });
       break;
     case 'getEth':
-      coinbase.getBuyPrice({currencyPair: 'BTC-USD'}, (err, cbObj) => {
+      coinbase.getBuyPrice({currencyPair: 'ETH-SGD'}, (err, cbObj) => {
         Promise.all([
           bx.getEthToThb(),
+          getExchangeRates(),
         ]).then(values => {
           const bxObj = values[0];
+          const rates = values[1];
           text = `The latest ETH prices are:\n`
-            + `BX - ${values[0].last_price} thb/eth\n`
-            + `Coinbase - ${cbObj.data.amount} usd/eth\n`;
+            + `[THB]\n`
+            + `Bx - ${values[0].last_price}\n`
+            + `Coinbase - ${cbObj.data.amount * rates.SGD}\n`
+            + `[SGD]\n`
+            + `Coinbase - ${cbObj.data.amount}\n`;
           return res.json({
             speech: text,
             displayText: text,
