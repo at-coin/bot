@@ -7,10 +7,7 @@ const functions = require('firebase-functions');
 
 const config = functions.config();
 
-const bx = new BxApi({
-  apiKey: config.bx.api_key,
-  apiSecret: config.bx.api_secret,
-});
+const bx = new BxApi(config.bx.api_key, config.bx.api_secret);
 const coinbase = new CoinbaseApi.Client({
   apiKey: config.coinbase.api_key,
   apiSecret: config.coinbase.api_secret,
@@ -42,8 +39,27 @@ exports.webhook = functions.https.onRequest((req, res) => {
   const pageId = orgInput.data.recipient.id;
   const userRoutingOnDb = `/${pageId}/${userId}`;
   switch(action) {
+    case 'calculateBxOmgProfit':
+      Promise.all([
+        bx.getAllTransactions(),
+        bx.getOmgToThbOnlyPrice(),
+      ]).then(values => {
+        const result = bx.calculateOmgProfit(values[0], values[1]);
+        console.log(result);
+        text = `OMG: ${result.omg}\n`
+          + `THB: ${result.thb}\n`
+          + `OMG Price: ${result.omgPrice}\n`
+          + `Net Profit: ${result.netProfit}`;
+        return res.json({
+          speech: text,
+          displayText: text,
+          contextOut: contexts,
+          source: 'AtCoinWebhook',
+        });
+      });
+      break;
     case 'getBxTransaction':
-      bx.getAllTransaction()
+      bx.getAllTransactions()
         .then(result => {
           text = 'Successfully get transaction data';
           return res.json({

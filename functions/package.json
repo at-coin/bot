@@ -6,7 +6,8 @@
     "basic-auth": "^1.1.0",
     "coinbase": "^2.0.6",
     "firebase-admin": "~4.2.1",
-    "firebase-functions": "^0.5.7"
+    "firebase-functions": "^0.5.7",
+    "qs": "^6.5.0"
   },
   "private": true
 }
