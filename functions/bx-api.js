@@ -6,6 +6,7 @@ const qs = require('qs');
 const BX_API_URL = 'https://bx.in.th/api/';
 
 const CurrencyPairEnum = {
+  BTC_THB: '1',
   ETH_THB: '21',
   OMG_THB: '26',
 };
@@ -65,6 +66,13 @@ class BxApi {
         signature: this.getSignature(unixTime),
       })).then((res) => {
         return res.data.transactions;
+      });
+  }
+
+  getBtcToThb() {
+    return axios.get(BX_API_URL)
+      .then((res) => {
+        return res.data[CurrencyPairEnum.BTC_THB];
       });
   }
 
