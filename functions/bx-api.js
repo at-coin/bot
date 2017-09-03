@@ -1,6 +1,5 @@
 const axios = require('axios');
 const crypto = require('crypto');
-const hash = crypto.createHash('sha256');
 const qs = require('qs');
 
 const BX_API_URL = 'https://bx.in.th/api/';
@@ -54,7 +53,9 @@ class BxApi {
   }
 
   getSignature(nonce) {
-    return hash.update(this.apiKey + nonce + this.apiSecret).digest('hex');
+    return crypto.createHash('sha256')
+      .update(this.apiKey + nonce + this.apiSecret)
+      .digest('hex');
   }
 
   getAllTransactions() {
