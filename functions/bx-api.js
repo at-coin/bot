@@ -16,7 +16,7 @@ class BxApi {
     this.apiSecret = apiSecret;
   }
 
-  calculateOmgProfit(transactions, omgPrice) {
+  mergeTransactions(transactions) {
     // merge time
     const timeTable = transactions.reduce((table, elem) => {
       const id = elem.transaction_id;
@@ -29,6 +29,36 @@ class BxApi {
       table[date][type][currency] = (table[date][type][currency] || 0) + parseFloat(amount);
       return table;
     }, {});
+    return timeTable;
+  }
+
+  calculateEthProfit(transactions, ethPrice) {
+    const timeTable = this.mergeTransactions(transactions);
+    // find only eth trading
+    let ethSum =0;
+    let thbSum = 0;
+    Object.keys(timeTable).forEach((key) => {
+      const value = timeTable[key];
+      if (value.trade && value.trade.ETH && value.trade.THB) {
+        thbSum += value.trade.THB;
+        ethSum += value.trade.ETH;
+      }
+      if (value.trade && value.fee) {
+        thbSum += value.fee.THB || 0;
+        ethSum += value.fee.ETH || 0;
+      }
+    });
+    // get current price to calculate net profit.
+    return {
+      eth: ethSum,
+      thb: thbSum,
+      ethPrice: ethPrice,
+      netProfit: (ethSum*ethPrice) + thbSum,
+    };
+  }
+
+  calculateOmgProfit(transactions, omgPrice) {
+    const timeTable = this.mergeTransactions(transactions);
     // find only omg trading
     let omgSum =0;
     let thbSum = 0;

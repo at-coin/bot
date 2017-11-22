@@ -109,6 +109,21 @@ exports.webhook = functions.https.onRequest((req, res) => {
         return res.json(createFbResponse(text, contexts));
       });
       break;
+    case 'calculateEthProfit':
+      // TODO: Also cal profit/lost from Coinbase
+      Promise.all([
+        bx.getAllTransactions(),
+        bx.getEthToThb(),
+      ]).then(values => {
+        const result = bx.calculateEthProfit(values[0], values[1].last_price);
+        text = stripIndent`
+          ETH: ${result.eth}
+          THB: ${result.thb}
+          ETH Price: ${result.ethPrice}
+          Net Profit: ${result.netProfit}`;
+        return res.json(createFbResponse(text, contexts));
+      });
+      break;
     case 'getBxTransaction':
       bx.getAllTransactions()
         .then(result => {
@@ -164,12 +179,6 @@ exports.webhook = functions.https.onRequest((req, res) => {
         });
       });
       break;
-    case 'getOmgToThb':
-      bx.getOmgToThb().then((result) => {
-        text = JSON.stringify(result, null, 2);
-        return res.json(createFbResponse(text, contexts));
-      });
-      break;
     case 'getOmg':
       Promise.all([
         bx.getOmgToThb(),
@@ -194,6 +203,10 @@ exports.webhook = functions.https.onRequest((req, res) => {
       admin.database().ref(`${userRoutingOnDb}/subscription`).set(true).then(snapshot => {
         return res.json(createFbResponse(text, contexts));
       });
+      break;
+    case 'help':
+      text = 'TODO: add help text';
+      return res.json(createFbResponse(text, contexts));
       break;
     default:
       text = 'No matching action';
