@@ -5,6 +5,7 @@ const BxApi = require('./bx-api');
 const CoinbaseApi = require('coinbase');
 const functions = require('firebase-functions');
 const fx = require('money');
+const stripIndent = require('common-tags/lib/stripIndent');
 
 const config = functions.config();
 
@@ -46,6 +47,20 @@ const getBitfinexTickers = () => axios.get(
     }
   });
 
+// Facebook command list as a quick reply
+const quick_replies = ['omg', 'omg profit', 'eth', 'btc'].map(text => ({
+  content_type: "text",
+  title: text,
+  payload: text,
+}));
+
+const createFbResponse = (text, contexts) => ({
+  speech: text,
+  displayText: text,
+  data: { facebook: { text, quick_replies } },
+  contextOut: contexts,
+  source: 'AtCoinWebhook',
+});
 
 exports.webhook = functions.https.onRequest((req, res) => {
   const credentials = auth(req);
@@ -73,14 +88,10 @@ exports.webhook = functions.https.onRequest((req, res) => {
   switch(action) {
     case 'getExchangeRates':
       getExchangeRates().then(rates => {
-        text = `USD: ${rates.USD}\n`
-          + `SGD: ${rates.SGD}`;
-        return res.json({
-          speech: text,
-          displayText: text,
-          contextOut: contexts,
-          source: 'AtCoinWebhook',
-        });
+        text = stripIndent`
+          USD: ${rates.USD}
+          SGD: ${rates.SGD}`;
+        return res.json(createFbResponse(text, contexts));
       });
       break;
     case 'calculateBxOmgProfit':
@@ -90,28 +101,19 @@ exports.webhook = functions.https.onRequest((req, res) => {
       ]).then(values => {
         const result = bx.calculateOmgProfit(values[0], values[1]);
         console.log(result);
-        text = `OMG: ${result.omg}\n`
-          + `THB: ${result.thb}\n`
-          + `OMG Price: ${result.omgPrice}\n`
-          + `Net Profit: ${result.netProfit}`;
-        return res.json({
-          speech: text,
-          displayText: text,
-          contextOut: contexts,
-          source: 'AtCoinWebhook',
-        });
+        text = stripIndent`
+          OMG: ${result.omg}
+          THB: ${result.thb}
+          OMG Price: ${result.omgPrice}
+          Net Profit: ${result.netProfit}`;
+        return res.json(createFbResponse(text, contexts));
       });
       break;
     case 'getBxTransaction':
       bx.getAllTransactions()
         .then(result => {
           text = 'Successfully get transaction data';
-          return res.json({
-            speech: text,
-            displayText: text,
-            contextOut: contexts,
-            source: 'AtCoinWebhook',
-          });
+          return res.json(createFbResponse(text, contexts));
         });
       break;
     case 'getBtc':
@@ -124,21 +126,17 @@ exports.webhook = functions.https.onRequest((req, res) => {
           const bxObj = values[0];
           const rates = values[1];
           const bfObj = values[2];
-          text = `The latest BTC prices are:\n`
-            + `[THB]\n`
-            + `Bx - ${values[0].last_price}\n`
-            + `Coinbase - ${cbObj.data.amount * rates.SGD}\n`
-            + `Bitfinex - ${bfObj.BTC.lastPrice * rates.USD}\n`
-            + `[SGD]\n`
-            + `Coinbase - ${cbObj.data.amount}\n`
-            + `[USD]\n`
-            + `Bitfinex - ${bfObj.BTC.lastPrice}\n`;
-          return res.json({
-            speech: text,
-            displayText: text,
-            contextOut: contexts,
-            source: 'AtCoinWebhook',
-          });
+          text = stripIndent`
+            The latest BTC prices are:
+            [THB]
+            Bx - ${values[0].last_price}
+            Coinbase - ${cbObj.data.amount * rates.SGD}
+            Bitfinex - ${bfObj.BTC.lastPrice * rates.USD}
+            [SGD]
+            Coinbase - ${cbObj.data.amount}
+            [USD]
+            Bitfinex - ${bfObj.BTC.lastPrice}`;
+          return res.json(createFbResponse(text, contexts));
         });
       });
       break;
@@ -152,33 +150,24 @@ exports.webhook = functions.https.onRequest((req, res) => {
           const bxObj = values[0];
           const rates = values[1];
           const bfObj = values[2];
-          text = `The latest ETH prices are:\n`
-            + `[THB]\n`
-            + `Bx - ${values[0].last_price}\n`
-            + `Coinbase - ${cbObj.data.amount * rates.SGD}\n`
-            + `Bitfinex - ${bfObj.ETH.lastPrice * rates.USD}\n`
-            + `[SGD]\n`
-            + `Coinbase - ${cbObj.data.amount}\n`
-            + `[USD]\n`
-            + `Bitfinex - ${bfObj.ETH.lastPrice}\n`;
-          return res.json({
-            speech: text,
-            displayText: text,
-            contextOut: contexts,
-            source: 'AtCoinWebhook',
-          });
+          text = stripIndent`
+            The latest ETH prices are:
+            [THB]
+            Bx - ${values[0].last_price}
+            Coinbase - ${cbObj.data.amount * rates.SGD}
+            Bitfinex - ${bfObj.ETH.lastPrice * rates.USD}
+            [SGD]
+            Coinbase - ${cbObj.data.amount}
+            [USD]
+            Bitfinex - ${bfObj.ETH.lastPrice}`;
+          return res.json(createFbResponse(text, contexts));
         });
       });
       break;
     case 'getOmgToThb':
       bx.getOmgToThb().then((result) => {
         text = JSON.stringify(result, null, 2);
-        return res.json({
-          speech: text,
-          displayText: text,
-          contextOut: contexts,
-          source: 'AtCoinWebhook',
-        });
+        return res.json(createFbResponse(text, contexts));
       });
       break;
     case 'getOmg':
@@ -190,39 +179,25 @@ exports.webhook = functions.https.onRequest((req, res) => {
         const bxObj = values[0];
         const rates = values[1];
         const bfObj = values[2];
-        text = `The latest OMG prices are:\n`
-          + `[THB]\n`
-          + `Bx - ${values[0].last_price}\n`
-          + `Bitfinex - ${bfObj.OMG.lastPrice * rates.USD}\n`
-          + `[USD]\n`
-          + `Bitfinex - ${bfObj.OMG.lastPrice}\n`;
-        return res.json({
-          speech: text,
-          displayText: text,
-          contextOut: contexts,
-          source: 'AtCoinWebhook',
-        });
+        text = stripIndent`
+          The latest OMG prices are:
+          [THB]
+          Bx - ${values[0].last_price}
+          Bitfinex - ${bfObj.OMG.lastPrice * rates.USD}
+          [USD]
+          Bitfinex - ${bfObj.OMG.lastPrice}`;
+        return res.json(createFbResponse(text, contexts));
       });
       break;
     case 'subscribe':
       text = 'Successfully subscribed to news';
       admin.database().ref(`${userRoutingOnDb}/subscription`).set(true).then(snapshot => {
-        return res.json({
-          speech: text,
-          displayText: text,
-          contextOut: contexts,
-          source: 'AtCoinWebhook',
-        });
+        return res.json(createFbResponse(text, contexts));
       });
       break;
     default:
       text = 'No matching action';
-      return res.json({
-        speech: text,
-        displayText: text,
-        contextOut: contexts,
-        source: 'AtCoinWebhook',
-      });
+      return res.json(createFbResponse(text, contexts));
   }
 });
 
