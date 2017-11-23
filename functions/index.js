@@ -1,20 +1,18 @@
 const admin = require('firebase-admin');
 const auth = require('basic-auth');
 const axios = require('axios');
-const BxApi = require('./bx-api');
-// TODO: Make Coinbase Promise
-const CoinbaseApi = require('coinbase');
 const functions = require('firebase-functions');
 const fx = require('money');
 const stripIndent = require('common-tags/lib/stripIndent');
 
 const config = functions.config();
 
+const BxApi = require('./bx-api');
+const CoinbaseApi = require('./coinbase-api');
+
 const bx = new BxApi(config.bx.api_key, config.bx.api_secret);
-const coinbase = new CoinbaseApi.Client({
-  apiKey: config.coinbase.api_key,
-  apiSecret: config.coinbase.api_secret,
-});
+const coinbase = new CoinbaseApi(
+  config.coinbase.api_key, config.coinbase.api_secret);
 
 admin.initializeApp(config.firebase);
 
@@ -133,51 +131,51 @@ exports.webhook = functions.https.onRequest((req, res) => {
         });
       break;
     case 'getBtc':
-      coinbase.getBuyPrice({currencyPair: 'BTC-SGD'}, (err, cbObj) => {
-        Promise.all([
-          bx.getBtcToThb(),
-          getExchangeRates(),
-          getBitfinexTickers(),
-        ]).then(values => {
-          const bxObj = values[0];
-          const rates = values[1];
-          const bfObj = values[2];
-          text = stripIndent`
-            The latest BTC prices are:
-            [THB]
-            Bx - ${values[0].last_price}
-            Coinbase - ${cbObj.data.amount * rates.SGD}
-            Bitfinex - ${bfObj.BTC.lastPrice * rates.USD}
-            [SGD]
-            Coinbase - ${cbObj.data.amount}
-            [USD]
-            Bitfinex - ${bfObj.BTC.lastPrice}`;
-          return res.json(createFbResponse(text, contexts));
-        });
+      Promise.all([
+        bx.getBtcToThb(),
+        getExchangeRates(),
+        getBitfinexTickers(),
+        coinbase.getBuyPrice('BTC-SGD'),
+      ]).then(values => {
+        const bxObj = values[0];
+        const rates = values[1];
+        const bfObj = values[2];
+        const cbObj = values[3];
+        text = stripIndent`
+          The latest BTC prices are:
+          [THB]
+          Bx - ${bxObj.last_price}
+          Coinbase - ${cbObj.data.amount * rates.SGD}
+          Bitfinex - ${bfObj.BTC.lastPrice * rates.USD}
+          [SGD]
+          Coinbase - ${cbObj.data.amount}
+          [USD]
+          Bitfinex - ${bfObj.BTC.lastPrice}`;
+        return res.json(createFbResponse(text, contexts));
       });
       break;
     case 'getEth':
-      coinbase.getBuyPrice({currencyPair: 'ETH-SGD'}, (err, cbObj) => {
-        Promise.all([
-          bx.getEthToThb(),
-          getExchangeRates(),
-          getBitfinexTickers(),
-        ]).then(values => {
-          const bxObj = values[0];
-          const rates = values[1];
-          const bfObj = values[2];
-          text = stripIndent`
-            The latest ETH prices are:
-            [THB]
-            Bx - ${values[0].last_price}
-            Coinbase - ${cbObj.data.amount * rates.SGD}
-            Bitfinex - ${bfObj.ETH.lastPrice * rates.USD}
-            [SGD]
-            Coinbase - ${cbObj.data.amount}
-            [USD]
-            Bitfinex - ${bfObj.ETH.lastPrice}`;
-          return res.json(createFbResponse(text, contexts));
-        });
+      Promise.all([
+        bx.getEthToThb(),
+        getExchangeRates(),
+        getBitfinexTickers(),
+        coinbase.getBuyPrice('ETH-SGD'),
+      ]).then(values => {
+        const bxObj = values[0];
+        const rates = values[1];
+        const bfObj = values[2];
+        const cbObj = values[3];
+        text = stripIndent`
+          The latest ETH prices are:
+          [THB]
+          Bx - ${bxObj.last_price}
+          Coinbase - ${cbObj.data.amount * rates.SGD}
+          Bitfinex - ${bfObj.ETH.lastPrice * rates.USD}
+          [SGD]
+          Coinbase - ${cbObj.data.amount}
+          [USD]
+          Bitfinex - ${bfObj.ETH.lastPrice}`;
+        return res.json(createFbResponse(text, contexts));
       });
       break;
     case 'getOmg':
@@ -192,7 +190,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
         text = stripIndent`
           The latest OMG prices are:
           [THB]
-          Bx - ${values[0].last_price}
+          Bx - ${bxObj.last_price}
           Bitfinex - ${bfObj.OMG.lastPrice * rates.USD}
           [USD]
           Bitfinex - ${bfObj.OMG.lastPrice}`;
