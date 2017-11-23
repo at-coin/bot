@@ -122,6 +122,14 @@ exports.webhook = functions.https.onRequest((req, res) => {
         return res.json(createFbResponse(text, contexts));
       });
       break;
+    case 'getCoinbaseTransaction':
+      coinbase.getAllTransactions()
+        .then(result => {
+          console.log(result);
+          text = 'Successfully get transaction data';
+          return res.json(createFbResponse(text, contexts));
+        });
+      break;
     case 'getBxTransaction':
       bx.getAllTransactions()
         .then(result => {
