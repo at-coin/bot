@@ -2,6 +2,7 @@ const admin = require('firebase-admin');
 const auth = require('basic-auth');
 const axios = require('axios');
 const BxApi = require('./bx-api');
+// TODO: Make Coinbase Promise
 const CoinbaseApi = require('coinbase');
 const functions = require('firebase-functions');
 const fx = require('money');
@@ -100,10 +101,9 @@ exports.webhook = functions.https.onRequest((req, res) => {
         bx.getOmgToThbOnlyPrice(),
       ]).then(values => {
         const result = bx.calculateOmgProfit(values[0], values[1]);
-        console.log(result);
         text = stripIndent`
-          OMG: ${result.omg}
-          THB: ${result.thb}
+          OMG: ${result.OMG}
+          THB: ${result.THB}
           OMG Price: ${result.omgPrice}
           Net Profit: ${result.netProfit}`;
         return res.json(createFbResponse(text, contexts));
@@ -117,8 +117,8 @@ exports.webhook = functions.https.onRequest((req, res) => {
       ]).then(values => {
         const result = bx.calculateEthProfit(values[0], values[1].last_price);
         text = stripIndent`
-          ETH: ${result.eth}
-          THB: ${result.thb}
+          ETH: ${result.ETH}
+          THB: ${result.THB}
           ETH Price: ${result.ethPrice}
           Net Profit: ${result.netProfit}`;
         return res.json(createFbResponse(text, contexts));
@@ -127,6 +127,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
     case 'getBxTransaction':
       bx.getAllTransactions()
         .then(result => {
+          console.log(result);
           text = 'Successfully get transaction data';
           return res.json(createFbResponse(text, contexts));
         });

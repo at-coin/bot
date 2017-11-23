@@ -32,54 +32,40 @@ class BxApi {
     return timeTable;
   }
 
-  calculateEthProfit(transactions, ethPrice) {
-    const timeTable = this.mergeTransactions(transactions);
-    // find only eth trading
-    let ethSum =0;
+  summarizeTransactions(timeTable, currency) {
     let thbSum = 0;
+    let currencySum = 0;
     Object.keys(timeTable).forEach((key) => {
       const value = timeTable[key];
-      if (value.trade && value.trade.ETH && value.trade.THB) {
+      if (value.trade && value.trade[currency] && value.trade.THB) {
         thbSum += value.trade.THB;
-        ethSum += value.trade.ETH;
+        currencySum += value.trade[currency];
       }
       if (value.trade && value.fee) {
         thbSum += value.fee.THB || 0;
-        ethSum += value.fee.ETH || 0;
+        currencySum += value.fee[currency] || 0;
       }
     });
-    // get current price to calculate net profit.
     return {
-      eth: ethSum,
-      thb: thbSum,
-      ethPrice: ethPrice,
-      netProfit: (ethSum*ethPrice) + thbSum,
+      THB: thbSum,
+      [currency]: currencySum,
     };
   }
 
-  calculateOmgProfit(transactions, omgPrice) {
-    const timeTable = this.mergeTransactions(transactions);
-    // find only omg trading
-    let omgSum =0;
-    let thbSum = 0;
-    Object.keys(timeTable).forEach((key) => {
-      const value = timeTable[key];
-      if (value.trade && value.trade.OMG && value.trade.THB) {
-        thbSum += value.trade.THB;
-        omgSum += value.trade.OMG;
-      }
-      if (value.trade && value.fee) {
-        thbSum += value.fee.THB || 0;
-        omgSum += value.fee.OMG || 0;
-      }
+  calculateEthProfit(transactions, ethPrice) {
+    const ethSummary = this.summarizeTransactions(transactions, 'ETH');
+    return Object.assign(ethSummary, {
+      ethPrice: ethPrice,
+      netProfit: (ethSummary.ETH * ethPrice) + ethSummary.THB,
     });
-    // get current price to calculate net profit.
-    return {
-      omg: omgSum,
-      thb: thbSum,
+  }
+
+  calculateOmgProfit(transactions, omgPrice) {
+    const omgSummary = this.summarizeTransactions(transactions, 'OMG');
+    return Object.assign(omgSummary, {
       omgPrice: omgPrice,
-      netProfit: (omgSum*omgPrice) + thbSum,
-    };
+      netProfit: (omgSummary.OMG * omgPrice) + omgSummary.THB,
+    });
   }
 
   getSignature(nonce) {
@@ -91,12 +77,13 @@ class BxApi {
   getAllTransactions() {
     const url = `${BX_API_URL}history/`;
     const unixTime = Date.now()*1000;
-    return axios.post(url, qs.stringify({
-        key: this.apiKey,
-        nonce: unixTime,
-        signature: this.getSignature(unixTime),
-      })).then((res) => {
-        return res.data.transactions;
+    const options = {
+      key: this.apiKey,
+      nonce: unixTime,
+      signature: this.getSignature(unixTime),
+    };
+    return axios.post(url, qs.stringify(options)).then((res) => {
+        return this.mergeTransactions(res.data.transactions);
       });
   }
 
