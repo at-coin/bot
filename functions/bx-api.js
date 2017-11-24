@@ -5,9 +5,9 @@ const qs = require('qs');
 const BX_API_URL = 'https://bx.in.th/api/';
 
 const CurrencyPairEnum = {
-  BTC_THB: '1',
-  ETH_THB: '21',
-  OMG_THB: '26',
+  'BTC-THB': '1',
+  'ETH-THB': '21',
+  'OMG-THB': '26',
 };
 
 class BxApi {
@@ -87,31 +87,10 @@ class BxApi {
       });
   }
 
-  getBtcToThb() {
+  getBuyPrice(currencyPair) {
     return axios.get(BX_API_URL)
       .then((res) => {
-        return res.data[CurrencyPairEnum.BTC_THB];
-      });
-  }
-
-  getEthToThb() {
-    return axios.get(BX_API_URL)
-      .then((res) => {
-        return res.data[CurrencyPairEnum.ETH_THB];
-      });
-  }
-
-  getOmgToThb() {
-    return axios.get(BX_API_URL)
-      .then((res) => {
-        return res.data[CurrencyPairEnum.OMG_THB];
-      });
-  }
-
-  getOmgToThbOnlyPrice() {
-    return axios.get(BX_API_URL)
-      .then((res) => {
-        return res.data[CurrencyPairEnum.OMG_THB].last_price;
+        return res.data[CurrencyPairEnum[currencyPair]];
       });
   }
 }

@@ -28,14 +28,15 @@ class CoinbaseApi {
     });
   }
 
-  getAllTransactions() {
+  getAccountsWithTransactions() {
     const getTransactions = (account) => {
       return new Promise((resolve, reject) => {
         account.getTransactions(null, (err, transactions) => {
             if (err) {
               return reject(err);
             }
-            return resolve(transactions);
+            account.transactions = transactions;
+            return resolve(account);
           });
       });
     };

@@ -96,9 +96,9 @@ exports.webhook = functions.https.onRequest((req, res) => {
     case 'calculateBxOmgProfit':
       Promise.all([
         bx.getAllTransactions(),
-        bx.getOmgToThbOnlyPrice(),
+        bx.getBuyPrice('OMG-THB'),
       ]).then(values => {
-        const result = bx.calculateOmgProfit(values[0], values[1]);
+        const result = bx.calculateOmgProfit(values[0], values[1].last_price);
         text = stripIndent`
           OMG: ${result.OMG}
           THB: ${result.THB}
@@ -111,7 +111,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
       // TODO: Also cal profit/lost from Coinbase
       Promise.all([
         bx.getAllTransactions(),
-        bx.getEthToThb(),
+        bx.getBuyPrice('ETH-THB'),
       ]).then(values => {
         const result = bx.calculateEthProfit(values[0], values[1].last_price);
         text = stripIndent`
@@ -126,7 +126,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
       coinbase.getAllTransactions()
         .then(result => {
           console.log(result);
-          text = 'Successfully get transaction data';
+          text = 'Successfully get accounts with transaction data';
           return res.json(createFbResponse(text, contexts));
         });
       break;
@@ -140,7 +140,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
       break;
     case 'getBtc':
       Promise.all([
-        bx.getBtcToThb(),
+        bx.getBuyPrice('BTC-THB'),
         getExchangeRates(),
         getBitfinexTickers(),
         coinbase.getBuyPrice('BTC-SGD'),
@@ -164,7 +164,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
       break;
     case 'getEth':
       Promise.all([
-        bx.getEthToThb(),
+        bx.getBuyPrice('ETH-THB'),
         getExchangeRates(),
         getBitfinexTickers(),
         coinbase.getBuyPrice('ETH-SGD'),
@@ -188,7 +188,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
       break;
     case 'getOmg':
       Promise.all([
-        bx.getOmgToThb(),
+        bx.getBuyPrice('OMG-THB'),
         getExchangeRates(),
         getBitfinexTickers(),
       ]).then(values => {
