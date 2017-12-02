@@ -18,6 +18,7 @@
     "eslint-plugin-import": "^2.8.0"
   },
   "scripts": {
-    "lint": "./node_modules/.bin/eslint *.js"
+    "lint": "./node_modules/.bin/eslint *.js",
+    "fix": "./node_modules/.bin/eslint *.js --fix"
   }
 }

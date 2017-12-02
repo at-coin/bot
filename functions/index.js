@@ -3,7 +3,7 @@ const auth = require('basic-auth');
 const axios = require('axios');
 const functions = require('firebase-functions');
 const fx = require('money');
-const {stripIndent, stripIndents} = require('common-tags');
+const { stripIndent, stripIndents } = require('common-tags');
 const tokenList = require('./ethTokens.json');
 
 const config = functions.config();
@@ -12,44 +12,43 @@ const BxApi = require('./bx-api');
 const CoinbaseApi = require('./coinbase-api');
 
 const bx = new BxApi(config.bx.api_key, config.bx.api_secret);
-const coinbase = new CoinbaseApi(
-  config.coinbase.api_key, config.coinbase.api_secret);
+const coinbase = new CoinbaseApi(config.coinbase.api_key, config.coinbase.api_secret);
 
 admin.initializeApp(config.firebase);
 
 // Convenient function to get exchange rate.
-const getExchangeRates = () => axios.get('http://api.fixer.io/latest?base=THB').then(res => {
+const getExchangeRates = () => axios.get('http://api.fixer.io/latest?base=THB').then((res) => {
   fx.base = res.data.base;
   fx.rates = res.data.rates;
   const SGD = fx(1).from('SGD').to('THB');
   const USD = fx(1).from('USD').to('THB');
-  return {SGD, USD};
+  return { SGD, USD };
 });
 
 // Get bitfinex ticker
-const getBitfinexTickers = () => axios.get(
-  'https://api.bitfinex.com/v2/tickers?symbols=tBTCUSD,tETHUSD,tLTCUSD,tOMGUSD')
-  .then(res => {
-    const data = res.data;
+const getBitfinexTickers = () => axios.get('https://api.bitfinex.com/v2/tickers?symbols=tBTCUSD,tETHUSD,tLTCUSD,tOMGUSD')
+  .then((res) => {
+    const { data } = res;
     return {
-      "BTC": {
+      BTC: {
         lastPrice: data[0][7],
       },
-      "ETH": {
+      ETH: {
         lastPrice: data[1][7],
       },
-      "LTC": {
+      LTC: {
         lastPrice: data[2][7],
       },
-      "OMG": {
+      OMG: {
         lastPrice: data[3][7],
       },
-    }
+    };
   });
 
 // Facebook command list as a quick reply
+/* eslint-disable camelcase */
 const quick_replies = ['omg', 'omg profit', 'eth', 'btc'].map(text => ({
-  content_type: "text",
+  content_type: 'text',
   title: text,
   payload: text,
 }));
@@ -61,6 +60,7 @@ const createFbResponse = (text, contexts) => ({
   contextOut: contexts,
   source: 'AtCoinWebhook',
 });
+/* eslint-enable camelcase */
 
 exports.webhook = functions.https.onRequest((req, res) => {
   const credentials = auth(req);
@@ -79,15 +79,14 @@ exports.webhook = functions.https.onRequest((req, res) => {
 
   const orgInput = req.body.originalRequest;
   const apiAiInput = req.body.result;
-  const action = apiAiInput.action;
-  const contexts = apiAiInput.contexts;
-  let text = 'default text';
+  const { action, contexts } = apiAiInput;
   const userId = orgInput.data.sender.id;
   const pageId = orgInput.data.recipient.id;
   const userRoutingOnDb = `/${pageId}/${userId}`;
-  switch(action) {
+  let text = '';
+  switch (action) {
     case 'getExchangeRates':
-      getExchangeRates().then(rates => {
+      getExchangeRates().then((rates) => {
         text = stripIndent`
           USD: ${rates.USD}
           SGD: ${rates.SGD}`;
@@ -99,7 +98,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
         bx.getAllTransactions(),
         bx.getBuyPrice('OMG-THB'),
         bx.getBalances(),
-      ]).then(values => {
+      ]).then((values) => {
         const result = bx.calculateOmgProfit(values[0], values[1].last_price);
         console.log(values[0]);
         console.log(values[2]);
@@ -116,7 +115,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
       Promise.all([
         bx.getAllTransactions(),
         bx.getBuyPrice('ETH-THB'),
-      ]).then(values => {
+      ]).then((values) => {
         const result = bx.calculateEthProfit(values[0], values[1].last_price);
         text = stripIndent`
           ETH: ${result.ETH}
@@ -128,25 +127,25 @@ exports.webhook = functions.https.onRequest((req, res) => {
       break;
     case 'getTokenList':
       console.log(tokenList);
-      const text = 'success';
-      return res.json(createFbResponse(text, contexts));
+      text = 'success';
+      res.json(createFbResponse(text, contexts));
       break;
     case 'getAllBalances':
       Promise.all([
         bx.getBalances(),
         coinbase.getBalances(),
-      ]).then(values => {
+      ]).then((values) => {
         function balanceTmpl(balances) {
-          let text = '';
+          let result = '';
           Object.keys(balances).forEach((key) => {
             const amount = parseFloat(balances[key]);
             if (amount !== 0) {
-              text += `${key} : ${amount}\n`;
+              result += `${key} : ${amount}\n`;
             }
           });
-          return text;
+          return result;
         }
-        const text = stripIndents`
+        text = stripIndents`
           [BX]
           ${balanceTmpl(values[0])}
           [Coinbase]
@@ -156,7 +155,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
       break;
     case 'getCoinbaseTransaction':
       coinbase.getAccountsWithTransactions()
-        .then(result => {
+        .then((result) => {
           console.log(result);
           text = 'Successfully get accounts with transaction data';
           return res.json(createFbResponse(text, contexts));
@@ -164,7 +163,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
       break;
     case 'getBxTransaction':
       bx.getAllTransactions()
-        .then(result => {
+        .then((result) => {
           console.log(result);
           text = 'Successfully get transaction data';
           return res.json(createFbResponse(text, contexts));
@@ -176,7 +175,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
         getExchangeRates(),
         getBitfinexTickers(),
         coinbase.getBuyPrice('BTC-SGD'),
-      ]).then(values => {
+      ]).then((values) => {
         const bxObj = values[0];
         const rates = values[1];
         const bfObj = values[2];
@@ -200,7 +199,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
         getExchangeRates(),
         getBitfinexTickers(),
         coinbase.getBuyPrice('ETH-SGD'),
-      ]).then(values => {
+      ]).then((values) => {
         const bxObj = values[0];
         const rates = values[1];
         const bfObj = values[2];
@@ -223,7 +222,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
         bx.getBuyPrice('OMG-THB'),
         getExchangeRates(),
         getBitfinexTickers(),
-      ]).then(values => {
+      ]).then((values) => {
         const bxObj = values[0];
         const rates = values[1];
         const bfObj = values[2];
@@ -239,17 +238,17 @@ exports.webhook = functions.https.onRequest((req, res) => {
       break;
     case 'subscribe':
       text = 'Successfully subscribed to news';
-      admin.database().ref(`${userRoutingOnDb}/subscription`).set(true).then(snapshot => {
-        return res.json(createFbResponse(text, contexts));
-      });
+      admin.database().ref(`${userRoutingOnDb}/subscription`).set(true)
+        .then(() => res.json(createFbResponse(text, contexts)));
       break;
     case 'help':
       text = 'TODO: add help text';
-      return res.json(createFbResponse(text, contexts));
+      res.json(createFbResponse(text, contexts));
       break;
     default:
       text = 'No matching action';
-      return res.json(createFbResponse(text, contexts));
+      res.json(createFbResponse(text, contexts));
+      break;
   }
 });
 
@@ -271,8 +270,8 @@ exports.sendToFb = functions.https.onRequest((req, res) => {
   }
 
   // Get all subscribed users
-  const tweet = IFTTTData.tweet;
-  admin.database().ref(`${pageId}`).once('value').then((snapshot) => {
+  const { tweet } = IFTTTData;
+  return admin.database().ref(`${pageId}`).once('value').then((snapshot) => {
     const allUsers = snapshot.val();
     const replyObj = {
       recipient: { id: 'some_id' },
@@ -288,7 +287,5 @@ exports.sendToFb = functions.https.onRequest((req, res) => {
     }, []);
     return axios.all(requests);
   })
-  .then((allResponses) => {
-    return res.send('success');
-  });
+    .then(() => res.send('success'));
 });

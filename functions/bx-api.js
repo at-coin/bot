@@ -17,7 +17,7 @@ class BxApi {
   }
 
   createAuthFields() {
-    const unixTime = Date.now()*1000;
+    const unixTime = Date.now() * 1000;
     const options = {
       key: this.apiKey,
       nonce: unixTime,
@@ -35,11 +35,9 @@ class BxApi {
   mergeTransactions(transactions) {
     // merge time
     const timeTable = transactions.reduce((table, elem) => {
-      const id = elem.transaction_id;
-      const currency = elem.currency;
-      const date = elem.date;
-      const amount = elem.amount;
-      const type = elem.type;
+      const {
+        amount, currency, date, type,
+      } = elem;
       table[date] = table[date] || {};
       table[date][type] = table[date][type] || {};
       table[date][type][currency] = (table[date][type][currency] || 0) + parseFloat(amount);
@@ -71,7 +69,7 @@ class BxApi {
   calculateEthProfit(transactions, ethPrice) {
     const ethSummary = this.summarizeTransactions(transactions, 'ETH');
     return Object.assign(ethSummary, {
-      ethPrice: ethPrice,
+      ethPrice,
       netProfit: (ethSummary.ETH * ethPrice) + ethSummary.THB,
     });
   }
@@ -79,16 +77,15 @@ class BxApi {
   calculateOmgProfit(transactions, omgPrice) {
     const omgSummary = this.summarizeTransactions(transactions, 'OMG');
     return Object.assign(omgSummary, {
-      omgPrice: omgPrice,
+      omgPrice,
       netProfit: (omgSummary.OMG * omgPrice) + omgSummary.THB,
     });
   }
 
   getAllTransactions() {
     const url = `${BX_API_URL}/history/`;
-    return axios.post(url, this.createAuthFields()).then((res) => {
-        return this.mergeTransactions(res.data.transactions);
-      });
+    return axios.post(url, this.createAuthFields())
+      .then(res => this.mergeTransactions(res.data.transactions));
   }
 
   getBalances() {
@@ -96,10 +93,10 @@ class BxApi {
     return axios.post(url, this.createAuthFields())
       .then((res) => {
         if (!res.data || !res.data.success) {
-          throw `unsuccessful requesting to ${url}`;
+          throw new Error(`unsuccessful requesting to ${url}`);
         }
         const balances = res.data.balance;
-        let summary = {};
+        const summary = {};
         Object.keys(balances).forEach((key) => {
           summary[key] = balances[key].total;
         });
@@ -108,11 +105,9 @@ class BxApi {
   }
 
   getBuyPrice(currencyPair) {
-    const url = `${BX_API_URL}/`
+    const url = `${BX_API_URL}/`;
     return axios.get(url)
-      .then((res) => {
-        return res.data[CurrencyPairEnum[currencyPair]];
-      });
+      .then(res => res.data[CurrencyPairEnum[currencyPair]]);
   }
 }
 
