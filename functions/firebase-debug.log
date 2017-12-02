@@ -1,0 +1,211 @@
+[debug] [2017-12-02T12:49:54.299Z] ----------------------------------------------------------------------
+[debug] [2017-12-02T12:49:54.302Z] Command:       /Users/twattanavekin/.nvm/versions/node/v8.4.0/bin/node /Users/twattanavekin/.nvm/versions/node/v8.4.0/bin/firebase deploy --only functions
+[debug] [2017-12-02T12:49:54.302Z] CLI Version:   3.15.4
+[debug] [2017-12-02T12:49:54.302Z] Platform:      darwin
+[debug] [2017-12-02T12:49:54.302Z] Node Version:  v8.4.0
+[debug] [2017-12-02T12:49:54.303Z] Time:          Sat Dec 02 2017 20:49:54 GMT+0800 (+08)
+[debug] [2017-12-02T12:49:54.303Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2017-12-02T12:49:54.325Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2017-12-02T12:49:54.325Z] > authorizing via signed-in user
+[debug] [2017-12-02T12:49:54.328Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/projects/at-coin  
+ Sat Dec 02 2017 20:49:54 GMT+0800 (+08)
+[debug] [2017-12-02T12:49:55.608Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:49:55.609Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/database/at-coin/tokens  
+ Sat Dec 02 2017 20:49:55 GMT+0800 (+08)
+[debug] [2017-12-02T12:49:56.556Z] <<< HTTP RESPONSE 200
+[info] 
+[info] === Deploying to 'at-coin'...
+[info] 
+[info] i  deploying functions
+[debug] [2017-12-02T12:49:57.728Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "dependencies": {
+    "axios": "^0.16.2",
+    "basic-auth": "^1.1.0",
+    "coinbase": "^2.0.6",
+    "common-tags": "^1.4.0",
+    "firebase-admin": "~4.2.1",
+    "firebase-functions": "^0.5.7",
+    "money": "^0.2.0",
+    "qs": "^6.5.0"
+  },
+  "private": true,
+  "devDependencies": {
+    "eslint": "^4.12.1",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0"
+  },
+  "scripts": {
+    "lint": "./node_modules/.bin/eslint *.js"
+  }
+}
+[info] i  functions: ensuring necessary APIs are enabled...
+[debug] [2017-12-02T12:49:57.730Z] >>> HTTP REQUEST GET https://servicemanagement.googleapis.com/v1/services/cloudfunctions.googleapis.com/projectSettings/at-coin?view=CONSUMER_VIEW  
+ Sat Dec 02 2017 20:49:57 GMT+0800 (+08)
+[debug] [2017-12-02T12:49:57.730Z] >>> HTTP REQUEST GET https://servicemanagement.googleapis.com/v1/services/runtimeconfig.googleapis.com/projectSettings/at-coin?view=CONSUMER_VIEW  
+ Sat Dec 02 2017 20:49:57 GMT+0800 (+08)
+[debug] [2017-12-02T12:49:59.209Z] <<< HTTP RESPONSE 200
+[info] ✔  functions: all necessary APIs are enabled
+[debug] [2017-12-02T12:49:59.221Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:49:59.222Z] >>> HTTP REQUEST GET https://appengine.googleapis.com/v1/apps/at-coin  
+ Sat Dec 02 2017 20:49:59 GMT+0800 (+08)
+[debug] [2017-12-02T12:49:59.223Z] >>> HTTP REQUEST GET https://apikeys.googleapis.com/v1/projects/at-coin/apiKeys  
+ Sat Dec 02 2017 20:49:59 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:00.619Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:00.620Z] <<< HTTP RESPONSE 200
+[info] i  functions: preparing functions directory for uploading...
+[debug] [2017-12-02T12:50:07.005Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs  
+ Sat Dec 02 2017 20:50:07 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:07.343Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:07.349Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/facebook/variables  
+ Sat Dec 02 2017 20:50:07 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:07.350Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/ifttt/variables  
+ Sat Dec 02 2017 20:50:07 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:07.350Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/bx/variables  
+ Sat Dec 02 2017 20:50:07 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:07.351Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/apiai/variables  
+ Sat Dec 02 2017 20:50:07 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:07.351Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/coinbase/variables  
+ Sat Dec 02 2017 20:50:07 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:07.683Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:07.685Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/ifttt/variables/access_token  
+ Sat Dec 02 2017 20:50:07 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:07.688Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:07.688Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/coinbase/variables/api_key  
+ Sat Dec 02 2017 20:50:07 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:07.689Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/coinbase/variables/api_secret  
+ Sat Dec 02 2017 20:50:07 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:07.694Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:07.695Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/facebook/variables/page_id  
+ Sat Dec 02 2017 20:50:07 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:07.696Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/facebook/variables/access_token  
+ Sat Dec 02 2017 20:50:07 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:08.017Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:08.018Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:08.019Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:08.033Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:08.067Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:08.067Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/apiai/variables/username  
+ Sat Dec 02 2017 20:50:08 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:08.068Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/apiai/variables/password  
+ Sat Dec 02 2017 20:50:08 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:08.376Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:08.419Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:08.811Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:08.811Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/bx/variables/api_key  
+ Sat Dec 02 2017 20:50:08 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:08.812Z] >>> HTTP REQUEST GET https://runtimeconfig.googleapis.com/v1beta1/projects/at-coin/configs/bx/variables/api_secret  
+ Sat Dec 02 2017 20:50:08 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:09.033Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:09.052Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:09.067Z] <<< HTTP RESPONSE 200
+[info] i  functions: packaged functions (40.82 KB) for uploading
+[debug] [2017-12-02T12:50:12.106Z] >>> HTTP REQUEST GET https://www.googleapis.com/storage/v1/b/staging.at-coin.appspot.com  
+ Sat Dec 02 2017 20:50:12 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:12.369Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:12.371Z] >>> HTTP REQUEST POST https://www.googleapis.com/upload/storage/v1/b/staging.at-coin.appspot.com/o?uploadType=media&name=firebase-functions-source ReadStream {
+  _readableState: 
+   ReadableState {
+     objectMode: false,
+     highWaterMark: 65536,
+     buffer: BufferList { head: [Object], tail: [Object], length: 1 },
+     length: 41799,
+     pipes: null,
+     pipesCount: 0,
+     flowing: null,
+     ended: true,
+     endEmitted: false,
+     reading: false,
+     sync: false,
+     needReadable: false,
+     emittedReadable: true,
+     readableListening: false,
+     resumeScheduled: false,
+     destroyed: false,
+     defaultEncoding: 'utf8',
+     awaitDrain: 0,
+     readingMore: false,
+     decoder: null,
+     encoding: null },
+  readable: true,
+  domain: null,
+  _events: { end: [Function] },
+  _eventsCount: 1,
+  _maxListeners: undefined,
+  path: '/var/folders/vr/lxdc5g090vs4cm5zh143759h0093yw/T/firebase-functions-333390G4hkCaPxAlm.zip',
+  fd: 19,
+  flags: 'r',
+  mode: 438,
+  start: undefined,
+  end: undefined,
+  autoClose: true,
+  pos: undefined,
+  bytesRead: 41799 } 
+ Sat Dec 02 2017 20:50:12 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:12.869Z] <<< HTTP RESPONSE 200
+[info] ✔  functions: functions folder uploaded successfully
+[debug] [2017-12-02T12:50:12.871Z] >>> HTTP REQUEST GET https://cloudfunctions.googleapis.com/v1/projects/at-coin/locations/us-central1/functions  
+ Sat Dec 02 2017 20:50:12 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:13.521Z] <<< HTTP RESPONSE 200
+[info] i  functions: updating function webhook...
+[debug] [2017-12-02T12:50:13.525Z] Trigger is: 
+[info] i  functions: updating function sendToFb...
+[debug] [2017-12-02T12:50:13.525Z] Trigger is: 
+[debug] [2017-12-02T12:50:13.527Z] >>> HTTP REQUEST PATCH https://cloudfunctions.googleapis.com/v1/projects/at-coin/locations/us-central1/functions/webhook { sourceArchiveUrl: 'gs://staging.at-coin.appspot.com/firebase-functions-source',
+  name: 'projects/at-coin/locations/us-central1/functions/webhook',
+  entryPoint: 'webhook',
+  timeout: undefined,
+  availableMemoryMb: 256,
+  failurePolicy: undefined,
+  labels: { 'deployment-tool': 'cli-firebase' },
+  httpsTrigger: {} } 
+ Sat Dec 02 2017 20:50:13 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:13.528Z] >>> HTTP REQUEST PATCH https://cloudfunctions.googleapis.com/v1/projects/at-coin/locations/us-central1/functions/sendToFb { sourceArchiveUrl: 'gs://staging.at-coin.appspot.com/firebase-functions-source',
+  name: 'projects/at-coin/locations/us-central1/functions/sendToFb',
+  entryPoint: 'sendToFb',
+  timeout: undefined,
+  availableMemoryMb: 256,
+  failurePolicy: undefined,
+  labels: { 'deployment-tool': 'cli-firebase' },
+  httpsTrigger: {} } 
+ Sat Dec 02 2017 20:50:13 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:14.120Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:14.151Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:14.153Z] >>> HTTP REQUEST GET https://cloudfunctions.googleapis.com/v1/operations/YXQtY29pbi91cy1jZW50cmFsMS93ZWJob29rL3pOWF91RnpPQVNB  
+ Sat Dec 02 2017 20:50:14 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:14.154Z] >>> HTTP REQUEST GET https://cloudfunctions.googleapis.com/v1/operations/YXQtY29pbi91cy1jZW50cmFsMS9zZW5kVG9GYi81NE40T2NRSXFScw  
+ Sat Dec 02 2017 20:50:14 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:14.750Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:14.751Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:16.753Z] >>> HTTP REQUEST GET https://cloudfunctions.googleapis.com/v1/operations/YXQtY29pbi91cy1jZW50cmFsMS93ZWJob29rL3pOWF91RnpPQVNB  
+ Sat Dec 02 2017 20:50:16 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:16.755Z] >>> HTTP REQUEST GET https://cloudfunctions.googleapis.com/v1/operations/YXQtY29pbi91cy1jZW50cmFsMS9zZW5kVG9GYi81NE40T2NRSXFScw  
+ Sat Dec 02 2017 20:50:16 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:17.081Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:17.313Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:19.084Z] >>> HTTP REQUEST GET https://cloudfunctions.googleapis.com/v1/operations/YXQtY29pbi91cy1jZW50cmFsMS93ZWJob29rL3pOWF91RnpPQVNB  
+ Sat Dec 02 2017 20:50:19 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:19.315Z] >>> HTTP REQUEST GET https://cloudfunctions.googleapis.com/v1/operations/YXQtY29pbi91cy1jZW50cmFsMS9zZW5kVG9GYi81NE40T2NRSXFScw  
+ Sat Dec 02 2017 20:50:19 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:19.368Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:19.842Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:21.374Z] >>> HTTP REQUEST GET https://cloudfunctions.googleapis.com/v1/operations/YXQtY29pbi91cy1jZW50cmFsMS93ZWJob29rL3pOWF91RnpPQVNB  
+ Sat Dec 02 2017 20:50:21 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:21.856Z] >>> HTTP REQUEST GET https://cloudfunctions.googleapis.com/v1/operations/YXQtY29pbi91cy1jZW50cmFsMS9zZW5kVG9GYi81NE40T2NRSXFScw  
+ Sat Dec 02 2017 20:50:21 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:21.957Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:22.382Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:23.960Z] >>> HTTP REQUEST GET https://cloudfunctions.googleapis.com/v1/operations/YXQtY29pbi91cy1jZW50cmFsMS93ZWJob29rL3pOWF91RnpPQVNB  
+ Sat Dec 02 2017 20:50:23 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:24.384Z] >>> HTTP REQUEST GET https://cloudfunctions.googleapis.com/v1/operations/YXQtY29pbi91cy1jZW50cmFsMS9zZW5kVG9GYi81NE40T2NRSXFScw  
+ Sat Dec 02 2017 20:50:24 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:24.517Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:24.667Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:26.522Z] >>> HTTP REQUEST GET https://cloudfunctions.googleapis.com/v1/operations/YXQtY29pbi91cy1jZW50cmFsMS93ZWJob29rL3pOWF91RnpPQVNB  
+ Sat Dec 02 2017 20:50:26 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:26.668Z] >>> HTTP REQUEST GET https://cloudfunctions.googleapis.com/v1/operations/YXQtY29pbi91cy1jZW50cmFsMS9zZW5kVG9GYi81NE40T2NRSXFScw  
+ Sat Dec 02 2017 20:50:26 GMT+0800 (+08)
+[debug] [2017-12-02T12:50:27.140Z] <<< HTTP RESPONSE 200
+[debug] [2017-12-02T12:50:27.201Z] <<< HTTP RESPONSE 200

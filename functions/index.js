@@ -3,7 +3,8 @@ const auth = require('basic-auth');
 const axios = require('axios');
 const functions = require('firebase-functions');
 const fx = require('money');
-const stripIndent = require('common-tags/lib/stripIndent');
+const {stripIndent, stripIndents} = require('common-tags');
+const tokenList = require('./ethTokens.json');
 
 const config = functions.config();
 
@@ -97,8 +98,11 @@ exports.webhook = functions.https.onRequest((req, res) => {
       Promise.all([
         bx.getAllTransactions(),
         bx.getBuyPrice('OMG-THB'),
+        bx.getBalances(),
       ]).then(values => {
         const result = bx.calculateOmgProfit(values[0], values[1].last_price);
+        console.log(values[0]);
+        console.log(values[2]);
         text = stripIndent`
           OMG: ${result.OMG}
           THB: ${result.THB}
@@ -122,8 +126,36 @@ exports.webhook = functions.https.onRequest((req, res) => {
         return res.json(createFbResponse(text, contexts));
       });
       break;
+    case 'getTokenList':
+      console.log(tokenList);
+      const text = 'success';
+      return res.json(createFbResponse(text, contexts));
+      break;
+    case 'getAllBalances':
+      Promise.all([
+        bx.getBalances(),
+        coinbase.getBalances(),
+      ]).then(values => {
+        function balanceTmpl(balances) {
+          let text = '';
+          Object.keys(balances).forEach((key) => {
+            const amount = parseFloat(balances[key]);
+            if (amount !== 0) {
+              text += `${key} : ${amount}\n`;
+            }
+          });
+          return text;
+        }
+        const text = stripIndents`
+          [BX]
+          ${balanceTmpl(values[0])}
+          [Coinbase]
+          ${balanceTmpl(values[1])}`;
+        return res.json(createFbResponse(text, contexts));
+      });
+      break;
     case 'getCoinbaseTransaction':
-      coinbase.getAllTransactions()
+      coinbase.getAccountsWithTransactions()
         .then(result => {
           console.log(result);
           text = 'Successfully get accounts with transaction data';

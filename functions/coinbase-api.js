@@ -42,9 +42,21 @@ class CoinbaseApi {
     };
     return this.getAccounts()
       .then(accounts => {
-        const allTransactions = accounts.map(account => getTransactions(account));
-        return Promise.all(allTransactions);
+        const accountsWithTransactions = accounts.map(account => getTransactions(account));
+        return Promise.all(accountsWithTransactions);
       });
+  }
+
+  getBalances() {
+    return this.getAccountsWithTransactions().then(accounts => {
+      const balances = accounts.reduce((result, account) => {
+        if (account.type === 'wallet') {
+          result[account.currency] = account.balance.amount;
+        }
+        return result;
+      }, {});
+      return balances;
+    });
   }
 }
 

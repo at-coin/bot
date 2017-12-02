@@ -11,5 +11,13 @@
     "money": "^0.2.0",
     "qs": "^6.5.0"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "eslint": "^4.12.1",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0"
+  },
+  "scripts": {
+    "lint": "./node_modules/.bin/eslint *.js"
+  }
 }

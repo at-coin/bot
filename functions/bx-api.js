@@ -2,7 +2,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 const qs = require('qs');
 
-const BX_API_URL = 'https://bx.in.th/api/';
+const BX_API_URL = 'https://bx.in.th/api';
 
 const CurrencyPairEnum = {
   'BTC-THB': '1',
@@ -14,6 +14,22 @@ class BxApi {
   constructor(apiKey, apiSecret) {
     this.apiKey = apiKey;
     this.apiSecret = apiSecret;
+  }
+
+  createAuthFields() {
+    const unixTime = Date.now()*1000;
+    const options = {
+      key: this.apiKey,
+      nonce: unixTime,
+      signature: this.getSignature(unixTime),
+    };
+    return qs.stringify(options);
+  }
+
+  getSignature(nonce) {
+    return crypto.createHash('sha256')
+      .update(this.apiKey + nonce + this.apiSecret)
+      .digest('hex');
   }
 
   mergeTransactions(transactions) {
@@ -68,27 +84,32 @@ class BxApi {
     });
   }
 
-  getSignature(nonce) {
-    return crypto.createHash('sha256')
-      .update(this.apiKey + nonce + this.apiSecret)
-      .digest('hex');
-  }
-
   getAllTransactions() {
-    const url = `${BX_API_URL}history/`;
-    const unixTime = Date.now()*1000;
-    const options = {
-      key: this.apiKey,
-      nonce: unixTime,
-      signature: this.getSignature(unixTime),
-    };
-    return axios.post(url, qs.stringify(options)).then((res) => {
+    const url = `${BX_API_URL}/history/`;
+    return axios.post(url, this.createAuthFields()).then((res) => {
         return this.mergeTransactions(res.data.transactions);
       });
   }
 
+  getBalances() {
+    const url = `${BX_API_URL}/balance/`;
+    return axios.post(url, this.createAuthFields())
+      .then((res) => {
+        if (!res.data || !res.data.success) {
+          throw `unsuccessful requesting to ${url}`;
+        }
+        const balances = res.data.balance;
+        let summary = {};
+        Object.keys(balances).forEach((key) => {
+          summary[key] = balances[key].total;
+        });
+        return summary;
+      });
+  }
+
   getBuyPrice(currencyPair) {
-    return axios.get(BX_API_URL)
+    const url = `${BX_API_URL}/`
+    return axios.get(url)
       .then((res) => {
         return res.data[CurrencyPairEnum[currencyPair]];
       });
