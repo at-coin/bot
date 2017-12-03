@@ -11,7 +11,8 @@
     "api_key": "",
     "api_secret": ""
   },
-  "ethscan": {
+  "mywallet": {
+    "account": "",
     "api_key": ""
   },
   "facebook": {

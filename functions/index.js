@@ -10,9 +10,11 @@ const config = require('./config.json');
 
 const BxApi = require('./bx-api');
 const CoinbaseApi = require('./coinbase-api');
+const MyWalletApi = require('./mywallet-api');
 
 const bx = new BxApi(config.bx.api_key, config.bx.api_secret);
 const coinbase = new CoinbaseApi(config.coinbase.api_key, config.coinbase.api_secret);
+const mywallet = new MyWalletApi(config.mywallet.account, config.mywallet.api_key);
 
 admin.initializeApp(functions.config().firebase);
 
@@ -134,6 +136,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
       Promise.all([
         bx.getBalances(),
         coinbase.getBalances(),
+        mywallet.getBalances(),
       ]).then((values) => {
         function balanceTmpl(balances) {
           let result = '';
@@ -149,7 +152,9 @@ exports.webhook = functions.https.onRequest((req, res) => {
           [BX]
           ${balanceTmpl(values[0])}
           [Coinbase]
-          ${balanceTmpl(values[1])}`;
+          ${balanceTmpl(values[1])}
+          [MyWallet]
+          ${balanceTmpl(values[2])}`;
         return res.json(createFbResponse(text, contexts));
       });
       break;
