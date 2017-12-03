@@ -6,7 +6,7 @@ const fx = require('money');
 const { stripIndent, stripIndents } = require('common-tags');
 const tokenList = require('./ethTokens.json');
 
-const config = functions.config();
+const config = require('./config.json');
 
 const BxApi = require('./bx-api');
 const CoinbaseApi = require('./coinbase-api');
@@ -14,7 +14,7 @@ const CoinbaseApi = require('./coinbase-api');
 const bx = new BxApi(config.bx.api_key, config.bx.api_secret);
 const coinbase = new CoinbaseApi(config.coinbase.api_key, config.coinbase.api_secret);
 
-admin.initializeApp(config.firebase);
+admin.initializeApp(functions.config().firebase);
 
 // Convenient function to get exchange rate.
 const getExchangeRates = () => axios.get('http://api.fixer.io/latest?base=THB').then((res) => {

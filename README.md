@@ -1,6 +1,19 @@
-# bot
+# At-Coin Bot
 
-# Environment Vars
+# Setup
+
+1. Copy config template to `config.json`
+
+```
+cd functions/
+cp config-tmpl.json config.json
+```
+
+2. Add all necessary keys & secrets in config.json
+
+3. Deploy to your own firebase cloud function
+
+# List of necessary keys & secrets
 
 apiai.username=...
 apiai.password=...
@@ -15,3 +28,5 @@ bx.api_secret=...
 
 coinbase.api_key=...
 coinbase.api_secret=...
+
+ethscan.api_key=...

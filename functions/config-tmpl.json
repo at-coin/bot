@@ -1,0 +1,24 @@
+{
+  "apiai": {
+    "username": "",
+    "password": ""
+  },
+  "bx": {
+    "api_key": "",
+    "api_secret": ""
+  },
+  "coinbase": {
+    "api_key": "",
+    "api_secret": ""
+  },
+  "ethscan": {
+    "api_key": ""
+  },
+  "facebook": {
+    "access_token": "",
+    "page_id": ""
+  },
+  "ifttt": {
+    "access_token": ""
+  }
+}
