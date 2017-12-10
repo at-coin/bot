@@ -35,15 +35,47 @@ class BxApi {
   mergeTransactions(transactions) {
     // merge time
     const timeTable = transactions.reduce((table, elem) => {
+      let amount = parseFloat(elem.amount);
       const {
-        amount, currency, date, type,
+        currency, date, type,
       } = elem;
       table[date] = table[date] || {};
-      table[date][type] = table[date][type] || {};
-      table[date][type][currency] = (table[date][type][currency] || 0) + parseFloat(amount);
+      table[date]['created_at'] = date;
+      amount = parseFloat(amount);
+      const negativeAmount = (amount < 0);
+      amount = Math.abs(amount);
+      if (type === 'fee') {
+        table[date][type] = { amount, currency };
+      } else if (type === 'trade'){
+        // TODO: Support more than just THB transactions
+        if (currency === 'THB') {
+          table[date]['type'] = (negativeAmount)? 'buy':'sell';
+          table[date]['subtotal'] = { amount, currency };
+          table[date]['native_amount'] = table[date]['subtotal'];
+        } else {
+          table[date]['currency'] = currency;
+          table[date]['amount'] = { amount, currency };
+        }
+      } else {
+        table[date]['type'] = table[date]['type'] || type;
+        table[date]['currency'] = currency;
+        table[date]['amount'] = { amount, currency };
+      }
+      // Find total; Sometimes, fee is missing. We will just ignore it.
+      if ('fee' in table[date] && 'subtotal' in table[date]) {
+        table[date]['native_amount'] = {
+          amount: (table[date].fee.amount + table[date].subtotal.amount),
+          currency: table[date].subtotal.currency,
+        }
+      }
       return table;
     }, {});
-    return timeTable;
+    // Change back to array;
+    const array = Object.keys(timeTable).reduce((result, key) => {
+      result.push(timeTable[key]);
+      return result;
+    }, []);
+    return array;
   }
 
   summarizeTransactions(timeTable, currency) {
@@ -66,26 +98,22 @@ class BxApi {
     };
   }
 
-  calculateEthProfit(transactions, ethPrice) {
-    const ethSummary = this.summarizeTransactions(transactions, 'ETH');
-    return Object.assign(ethSummary, {
-      ethPrice,
-      netProfit: (ethSummary.ETH * ethPrice) + ethSummary.THB,
-    });
-  }
-
-  calculateOmgProfit(transactions, omgPrice) {
-    const omgSummary = this.summarizeTransactions(transactions, 'OMG');
-    return Object.assign(omgSummary, {
-      omgPrice,
-      netProfit: (omgSummary.OMG * omgPrice) + omgSummary.THB,
-    });
-  }
-
   getAllTransactions() {
     const url = `${BX_API_URL}/history/`;
     return axios.post(url, this.createAuthFields())
       .then(res => this.mergeTransactions(res.data.transactions));
+  }
+
+  getTransactionsSummary() {
+    return this.getAllTransactions().then((transactions) => {
+      const allTransactions = transactions.reduce((result, transaction) => {
+        const currency = transaction.currency;
+        result[currency] = result[currency] || [];
+        result[currency].push(transaction);
+        return result;
+      }, {});
+      return allTransactions;
+    });
   }
 
   getBalances() {
@@ -107,7 +135,27 @@ class BxApi {
   getBuyPrice(currencyPair) {
     const url = `${BX_API_URL}/`;
     return axios.get(url)
-      .then(res => res.data[CurrencyPairEnum[currencyPair]]);
+      .then(res => {
+        const pairs = res.data;
+        const allBuyPrices = {};
+        Object.keys(pairs).map((key) => {
+          const value = pairs[key];
+          const primary = value.primary_currency;
+          const secondary = value.secondary_currency;
+          allBuyPrices[primary] = allBuyPrices[primary] || {};
+          allBuyPrices[primary][secondary] = value;
+        });
+        if (currencyPair) {
+          const primary = currencyPair.split('-')[0];
+          const secondary = currencyPair.split('-')[1];
+          if (!(primary in allBuyPrices) ||
+            !(secondary in allBuyPrices[primary])) {
+            return undefined;
+          }
+          return allBuyPrices[primary][secondary];
+        }
+        return allBuyPrices;
+      });
   }
 }
 

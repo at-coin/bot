@@ -6,6 +6,7 @@
     "basic-auth": "^1.1.0",
     "coinbase": "^2.0.6",
     "common-tags": "^1.4.0",
+    "deepmerge": "^2.0.1",
     "firebase-admin": "~4.2.1",
     "firebase-functions": "^0.5.7",
     "money": "^0.2.0",

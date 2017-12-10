@@ -5,6 +5,7 @@ const functions = require('firebase-functions');
 const fx = require('money');
 const { stripIndent, stripIndents } = require('common-tags');
 const tokenList = require('./ethTokens.json');
+const utils = require('./utils');
 
 const config = require('./config.json');
 
@@ -81,7 +82,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
 
   const orgInput = req.body.originalRequest;
   const apiAiInput = req.body.result;
-  const { action, contexts } = apiAiInput;
+  const { action, parameters, contexts } = apiAiInput;
   const userId = orgInput.data.sender.id;
   const pageId = orgInput.data.recipient.id;
   const userRoutingOnDb = `/${pageId}/${userId}`;
@@ -92,38 +93,6 @@ exports.webhook = functions.https.onRequest((req, res) => {
         text = stripIndent`
           USD: ${rates.USD}
           SGD: ${rates.SGD}`;
-        return res.json(createFbResponse(text, contexts));
-      });
-      break;
-    case 'calculateBxOmgProfit':
-      Promise.all([
-        bx.getAllTransactions(),
-        bx.getBuyPrice('OMG-THB'),
-        bx.getBalances(),
-      ]).then((values) => {
-        const result = bx.calculateOmgProfit(values[0], values[1].last_price);
-        console.log(values[0]);
-        console.log(values[2]);
-        text = stripIndent`
-          OMG: ${result.OMG}
-          THB: ${result.THB}
-          OMG Price: ${result.omgPrice}
-          Net Profit: ${result.netProfit}`;
-        return res.json(createFbResponse(text, contexts));
-      });
-      break;
-    case 'calculateEthProfit':
-      // TODO: Also cal profit/lost from Coinbase
-      Promise.all([
-        bx.getAllTransactions(),
-        bx.getBuyPrice('ETH-THB'),
-      ]).then((values) => {
-        const result = bx.calculateEthProfit(values[0], values[1].last_price);
-        text = stripIndent`
-          ETH: ${result.ETH}
-          THB: ${result.THB}
-          ETH Price: ${result.ethPrice}
-          Net Profit: ${result.netProfit}`;
         return res.json(createFbResponse(text, contexts));
       });
       break;
@@ -158,6 +127,64 @@ exports.webhook = functions.https.onRequest((req, res) => {
         return res.json(createFbResponse(text, contexts));
       });
       break;
+    case 'getAllProfits':
+      Promise.all([
+        bx.getBalances(),
+        coinbase.getBalances(),
+        mywallet.getBalances(),
+        bx.getTransactionsSummary(),
+        coinbase.getTransactionsSummary(),
+        getExchangeRates(),
+        bx.getBuyPrice(),
+      ]).then((values) => {
+        const wantedCoin = parameters.currency.toUpperCase();
+        const bxBal = values[0];
+        const cbBal = values[1];
+        const walletBal = values[2];
+        const bxTrans = values[3];
+        const cbTrans = values[4];
+        const rates = values[5];
+        const buyPrices = values[6];
+        // Sum up balances;
+        let balances = {};
+        utils.addUpBalances(bxBal, balances);
+        utils.addUpBalances(cbBal, balances);
+        utils.addUpBalances(walletBal, balances);
+        const bxSum = utils.summarizeExchangeSiteTransactions(bxTrans);
+        const cbSum = utils.summarizeExchangeSiteTransactions(cbTrans);
+        let buys = {};
+        utils.addUpType(bxSum, buys, 'buy', rates);
+        utils.addUpType(cbSum, buys, 'buy', rates);
+        let sells = {};
+        utils.addUpType(bxSum, sells, 'sell', rates);
+        utils.addUpType(cbSum, sells, 'sell', rates);
+        const profits = utils.calProfits(balances, buys, sells, buyPrices);
+        text = JSON.stringify(profits[wantedCoin]);
+        text = text.replace(/[{}"]/g, '').replace(/,/g, '\n');
+        return res.json(createFbResponse(text, contexts));
+      });
+      break;
+    case 'getAllTransactions':
+      Promise.all([
+        bx.getTransactionsSummary(),
+        coinbase.getTransactionsSummary(),
+        getExchangeRates(),
+      ]).then((values) => {
+        const bxTrans = values[0];
+        const cbTrans = values[1];
+        const rates = values[2];
+        const bxSum = utils.summarizeExchangeSiteTransactions(bxTrans);
+        console.log(bxSum);
+        const cbSum = utils.summarizeExchangeSiteTransactions(cbTrans);
+        console.log(cbSum);
+        /*admin.database().ref(`${userRoutingOnDb}/CoinbaseTransactions`)
+          .set(values[1])
+          .then(() => res.json(createFbResponse(text, contexts)));*/
+        text = stripIndents`
+          ${utils.summaryTmpl('Coinbase', cbSum)}`;
+        return res.json(createFbResponse(text, contexts));
+      });
+      break;
     case 'getCoinbaseTransaction':
       coinbase.getAccountsWithTransactions()
         .then((result) => {
@@ -176,7 +203,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
       break;
     case 'getBtc':
       Promise.all([
-        bx.getBuyPrice('BTC-THB'),
+        bx.getBuyPrice('THB-BTC'),
         getExchangeRates(),
         getBitfinexTickers(),
         coinbase.getBuyPrice('BTC-SGD'),
@@ -200,7 +227,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
       break;
     case 'getEth':
       Promise.all([
-        bx.getBuyPrice('ETH-THB'),
+        bx.getBuyPrice('THB-ETH'),
         getExchangeRates(),
         getBitfinexTickers(),
         coinbase.getBuyPrice('ETH-SGD'),
@@ -224,7 +251,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
       break;
     case 'getOmg':
       Promise.all([
-        bx.getBuyPrice('OMG-THB'),
+        bx.getBuyPrice('THB-OMG'),
         getExchangeRates(),
         getBitfinexTickers(),
       ]).then((values) => {

@@ -29,6 +29,11 @@ class MyWalletApi {
       return axios.get(ETHERSCAN_URL, { params })
         .then(result => ({ [token.symbol]: this.convertWeiToFloat(result.data.result) }));
     });
+    // Also, add ETH in.
+    const ethParams = Object.assign({}, baseParams, { action: 'balance' });
+    const getEthBalance = axios.get(ETHERSCAN_URL, { params: ethParams })
+      .then(result => ({ 'ETH': this.convertWeiToFloat(result.data.result) }));
+    balanceRequests.push(getEthBalance);
     return Promise.all(balanceRequests)
       .then((values) => {
         return Object.assign({}, ...values);

@@ -1,7 +1,13 @@
 const cbLib = require('coinbase');
+const axios = require('axios');
+const qs = require('qs');
+
+const CB_API_URL = 'https://api.coinbase.com/v2';
 
 class CoinbaseApi {
   constructor(apiKey, apiSecret) {
+    this.apiKey = apiKey;
+    this.apiSecret = apiSecret;
     this.coinbase = new cbLib.Client({ apiKey, apiSecret });
   }
 
@@ -42,6 +48,22 @@ class CoinbaseApi {
         const accountsWithTransactions = accounts.map(account => getTransactions(account));
         return Promise.all(accountsWithTransactions);
       });
+  }
+
+  getTransactionsSummary() {
+    return this.getAccountsWithTransactions().then((accounts) => {
+      const allTransactions = accounts.reduce((result, account) => {
+        if (account.type === 'wallet') {
+          // Delete big unnecessary object
+          account.transactions.map((single) => {
+            delete single.account;
+          });
+          result[account.currency] = account.transactions;
+        }
+        return result;
+      }, {});
+      return allTransactions;
+    });
   }
 
   getBalances() {
