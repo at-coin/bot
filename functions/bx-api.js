@@ -61,6 +61,7 @@ class BxApi {
         table[date]['currency'] = currency;
         table[date]['amount'] = { amount, currency };
       }
+      // TODO: Just assign 0-value to fee if not exists.
       // Find total; Sometimes, fee is missing. We will just ignore it.
       if ('fee' in table[date] && 'subtotal' in table[date]) {
         table[date]['native_amount'] = {

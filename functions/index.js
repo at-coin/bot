@@ -50,7 +50,7 @@ const getBitfinexTickers = () => axios.get('https://api.bitfinex.com/v2/tickers?
 
 // Facebook command list as a quick reply
 /* eslint-disable camelcase */
-const quick_replies = ['omg', 'omg profit', 'eth', 'btc'].map(text => ({
+const quick_replies = ['omg price', 'omg profit', 'eth price', 'btc price'].map(text => ({
   content_type: 'text',
   title: text,
   payload: text,
@@ -103,9 +103,12 @@ exports.webhook = functions.https.onRequest((req, res) => {
       break;
     case 'getAllBalances':
       Promise.all([
-        bx.getBalances(),
-        coinbase.getBalances(),
-        mywallet.getBalances(),
+        utils.getBalancesAndRecordToDb(
+          bx, `${userRoutingOnDb}/BxBalances`),
+        utils.getBalancesAndRecordToDb(
+          coinbase, `${userRoutingOnDb}/CoinbaseBalances`),
+        utils.getBalancesAndRecordToDb(
+          mywallet, `${userRoutingOnDb}/MyWalletBalances`),
       ]).then((values) => {
         function balanceTmpl(balances) {
           let result = '';
@@ -129,22 +132,24 @@ exports.webhook = functions.https.onRequest((req, res) => {
       break;
     case 'getAllProfits':
       Promise.all([
-        bx.getBalances(),
-        coinbase.getBalances(),
-        mywallet.getBalances(),
-        bx.getTransactionsSummary(),
-        coinbase.getTransactionsSummary(),
+        utils.getBalancesAndRecordToDb(
+          bx, `${userRoutingOnDb}/BxBalances`),
+        utils.getBalancesAndRecordToDb(
+          coinbase, `${userRoutingOnDb}/CoinbaseBalances`),
+        utils.getBalancesAndRecordToDb(
+          mywallet, `${userRoutingOnDb}/MyWalletBalances`),
+        utils.getAllTransactionsAndRecordToDb(
+          bx, `${userRoutingOnDb}/BxTransactions`),
+        utils.getAllTransactionsAndRecordToDb(
+          coinbase, `${userRoutingOnDb}/CoinbaseTransactions`),
         getExchangeRates(),
         bx.getBuyPrice(),
-      ]).then((values) => {
+      ]).then(([
+        bxBal, cbBal, walletBal,
+        bxTrans, cbTrans,
+        rates, buyPrices,
+      ]) => {
         const wantedCoin = parameters.currency.toUpperCase();
-        const bxBal = values[0];
-        const cbBal = values[1];
-        const walletBal = values[2];
-        const bxTrans = values[3];
-        const cbTrans = values[4];
-        const rates = values[5];
-        const buyPrices = values[6];
         // Sum up balances;
         let balances = {};
         utils.addUpBalances(bxBal, balances);
@@ -174,12 +179,7 @@ exports.webhook = functions.https.onRequest((req, res) => {
         const cbTrans = values[1];
         const rates = values[2];
         const bxSum = utils.summarizeExchangeSiteTransactions(bxTrans);
-        console.log(bxSum);
         const cbSum = utils.summarizeExchangeSiteTransactions(cbTrans);
-        console.log(cbSum);
-        /*admin.database().ref(`${userRoutingOnDb}/CoinbaseTransactions`)
-          .set(values[1])
-          .then(() => res.json(createFbResponse(text, contexts)));*/
         text = stripIndents`
           ${utils.summaryTmpl('Coinbase', cbSum)}`;
         return res.json(createFbResponse(text, contexts));
@@ -201,73 +201,34 @@ exports.webhook = functions.https.onRequest((req, res) => {
           return res.json(createFbResponse(text, contexts));
         });
       break;
-    case 'getBtc':
-      Promise.all([
-        bx.getBuyPrice('THB-BTC'),
-        getExchangeRates(),
+    case 'getPrice': {
+      const wantedCoin = parameters.currency.toUpperCase();
+      let promises = [
+        bx.getBuyPrice(`THB-${wantedCoin}`),
         getBitfinexTickers(),
-        coinbase.getBuyPrice('BTC-SGD'),
-      ]).then((values) => {
-        const bxObj = values[0];
-        const rates = values[1];
-        const bfObj = values[2];
-        const cbObj = values[3];
+        getExchangeRates(),
+        { data: { amount: 0 } },
+      ];
+      // Coinbase cannot handle other coins.
+      // So, we will just return 0.
+      if (['BTC', 'ETH', 'LTC'].indexOf(wantedCoin) !== -1) {
+        promises[3] = coinbase.getBuyPrice(`${wantedCoin}-SGD`);
+      }
+      Promise.all(promises).then(([bxObj, bfObj, rates, cbObj]) => {
         text = stripIndent`
-          The latest BTC prices are:
+          The latest ${wantedCoin} prices are:
           [THB]
           Bx - ${bxObj.last_price}
           Coinbase - ${cbObj.data.amount * rates.SGD}
-          Bitfinex - ${bfObj.BTC.lastPrice * rates.USD}
+          Bitfinex - ${bfObj[wantedCoin].lastPrice * rates.USD}
           [SGD]
           Coinbase - ${cbObj.data.amount}
           [USD]
-          Bitfinex - ${bfObj.BTC.lastPrice}`;
+          Bitfinex - ${bfObj[wantedCoin].lastPrice}`;
         return res.json(createFbResponse(text, contexts));
       });
       break;
-    case 'getEth':
-      Promise.all([
-        bx.getBuyPrice('THB-ETH'),
-        getExchangeRates(),
-        getBitfinexTickers(),
-        coinbase.getBuyPrice('ETH-SGD'),
-      ]).then((values) => {
-        const bxObj = values[0];
-        const rates = values[1];
-        const bfObj = values[2];
-        const cbObj = values[3];
-        text = stripIndent`
-          The latest ETH prices are:
-          [THB]
-          Bx - ${bxObj.last_price}
-          Coinbase - ${cbObj.data.amount * rates.SGD}
-          Bitfinex - ${bfObj.ETH.lastPrice * rates.USD}
-          [SGD]
-          Coinbase - ${cbObj.data.amount}
-          [USD]
-          Bitfinex - ${bfObj.ETH.lastPrice}`;
-        return res.json(createFbResponse(text, contexts));
-      });
-      break;
-    case 'getOmg':
-      Promise.all([
-        bx.getBuyPrice('THB-OMG'),
-        getExchangeRates(),
-        getBitfinexTickers(),
-      ]).then((values) => {
-        const bxObj = values[0];
-        const rates = values[1];
-        const bfObj = values[2];
-        text = stripIndent`
-          The latest OMG prices are:
-          [THB]
-          Bx - ${bxObj.last_price}
-          Bitfinex - ${bfObj.OMG.lastPrice * rates.USD}
-          [USD]
-          Bitfinex - ${bfObj.OMG.lastPrice}`;
-        return res.json(createFbResponse(text, contexts));
-      });
-      break;
+    }
     case 'subscribe':
       text = 'Successfully subscribed to news';
       admin.database().ref(`${userRoutingOnDb}/subscription`).set(true)

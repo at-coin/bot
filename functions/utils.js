@@ -1,3 +1,6 @@
+const admin = require('firebase-admin');
+const _ = require('lodash');
+
 const summarizeCoinTransactions = (transactions) => {
   return transactions.reduce((result, one) => {
     const { type } = one;
@@ -83,11 +86,64 @@ const calProfits = (balances, buys, sells, buyPrices) => {
   return result;
 }
 
+const getBalancesAndRecordToDb = (exApi, dbPath) => {
+  return Promise.all([
+    exApi.getBalances(),
+    admin.database().ref(dbPath).once('value'),
+  ]).then((values) => {
+    console.log(values);
+    const newBalances = values[0] || {};
+    const oldBalances = values[1].val() || {};
+    const latestBalances = Object.assign({}, oldBalances, newBalances);
+    return admin.database().ref(dbPath).set(latestBalances).then(() => latestBalances);
+  });
+};
+
+// TODO: Check only the latest missing transactions.
+// Currently, we are checking the whole thing and merging them.
+const getAllTransactionsAndRecordToDb = (exApi, dbPath) => {
+  return Promise.all([
+    exApi.getTransactionsSummary(),
+    admin.database().ref(dbPath).once('value'),
+  ]).then((values) => {
+    const newTrans = values[0] || {};
+    const oldTrans = values[1].val() || {};
+    const allCoins = [
+      ...Object.keys(newTrans),
+      ...Object.keys(oldTrans),
+    ];
+    function transactionEqual(a, b) {
+      return (a.created_at === b.created_at) && (_.isEqual(a.amount, b.amount));
+    }
+    const latestTrans = {};
+    allCoins.map((coin) => {
+      newTrans[coin] = newTrans[coin] || [];
+      oldTrans[coin] = oldTrans[coin] || [];
+      latestTrans[coin] = _.unionWith(newTrans[coin], oldTrans[coin], transactionEqual);
+      // Temporary populate native_amount value;
+      /*latestTrans[coin] = latestTrans[coin].map((item) => {
+        if (item.native_amount) return item;
+        const fee = item.fee? item.fee.amount : 0;
+        if (!item.subtotal) return item;
+        item['native_amount'] = {
+          amount: item.subtotal.amount + fee,
+          currency: item.subtotal.currency,
+        }
+        return item;
+      });*/
+    });
+    return admin.database().ref(dbPath).set(latestTrans).then(() => latestTrans);
+  });
+};
+
+
 module.exports = {
-  summarizeCoinTransactions,
-  summarizeExchangeSiteTransactions,
-  summaryTmpl,
   addUpBalances,
   addUpType,
   calProfits,
+  getBalancesAndRecordToDb,
+  getAllTransactionsAndRecordToDb,
+  summarizeCoinTransactions,
+  summarizeExchangeSiteTransactions,
+  summaryTmpl,
 };
