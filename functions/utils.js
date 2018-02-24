@@ -87,16 +87,24 @@ const calProfits = (balances, buys, sells, buyPrices) => {
 }
 
 const getBalancesAndRecordToDb = (exApi, dbPath) => {
-  return Promise.all([
-    exApi.getBalances(),
-    admin.database().ref(dbPath).once('value'),
-  ]).then((values) => {
-    console.log(values);
-    const newBalances = values[0] || {};
-    const oldBalances = values[1].val() || {};
-    const latestBalances = Object.assign({}, oldBalances, newBalances);
-    return admin.database().ref(dbPath).set(latestBalances).then(() => latestBalances);
-  });
+  return exApi.getBalances()
+    .catch((err) => {
+      console.error(err);
+      return {};
+    })
+    .then((oldBalances) => {
+      console.log(oldBalances);
+      return Promise.all([
+        oldBalances,
+        admin.database().ref(dbPath).once('value'),
+      ]);
+    })
+    .then((values) => {
+      const newBalances = values[0] || {};
+      const oldBalances = values[1].val() || {};
+      const latestBalances = Object.assign({}, oldBalances, newBalances);
+      return admin.database().ref(dbPath).set(latestBalances).then(() => latestBalances);
+    });
 };
 
 // TODO: Check only the latest missing transactions.

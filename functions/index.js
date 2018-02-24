@@ -50,7 +50,7 @@ const getBitfinexTickers = () => axios.get('https://api.bitfinex.com/v2/tickers?
 
 // Facebook command list as a quick reply
 /* eslint-disable camelcase */
-const quick_replies = ['omg price', 'omg profit', 'eth price', 'btc price'].map(text => ({
+const quick_replies = ['omg', 'omg profit', 'eth', 'btc'].map(text => ({
   content_type: 'text',
   title: text,
   payload: text,
