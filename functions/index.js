@@ -282,3 +282,67 @@ exports.sendToFb = functions.https.onRequest((req, res) => {
   })
     .then(() => res.send('success'));
 });
+
+exports.checkEthAbitrage = functions.https.onRequest((req, res) => {
+  if (!config.facebook ||
+      !config.facebook.access_token ||
+      !config.facebook.page_id) {
+    console.log('Config is not properly set');
+    return res.send(401);
+  }
+  const pageId = config.facebook.page_id;
+  const fbAccessToken = config.facebook.access_token;
+  const url = `https://graph.facebook.com/v2.6/me/messages?access_token=${fbAccessToken}`;
+
+  const IFTTTData = req.body;
+  if (IFTTTData.access_token !== config.ifttt.access_token) {
+    console.log('IFTTT token is incorrect!');
+    return res.send(401);
+  }
+
+  let text = '';
+  const wantedCoin =  'ETH';
+  let promises = [
+    bx.getBuyPrice(`THB-${wantedCoin}`),
+    getBitfinexTickers(),
+    getExchangeRates(),
+    { data: { amount: 0 } },
+  ];
+  // Coinbase cannot handle other coins.
+  // So, we will just return 0.
+  if (['BTC', 'ETH', 'LTC'].indexOf(wantedCoin) !== -1) {
+    promises[3] = coinbase.getBuyPrice(`${wantedCoin}-SGD`);
+  }
+  Promise.all(promises).then(([bxObj, bfObj, rates, cbObj]) => {
+    const ethDiff = bxObj.last_price - cbObj.data.amount * rates.SGD;
+    if (ethDiff < 1000) throw Error('Check eth diff but Diff is less than 1000. Message will not be sent out.');
+    text = stripIndent`
+          The latest ${wantedCoin} prices are:
+          [THB]
+          Bx - ${bxObj.last_price}
+          Coinbase - ${cbObj.data.amount * rates.SGD}
+          Bitfinex - ${bfObj[wantedCoin].lastPrice * rates.USD}
+          [SGD]
+          Coinbase - ${cbObj.data.amount}
+          [USD]
+          Bitfinex - ${bfObj[wantedCoin].lastPrice}
+          [Diff]
+          Bx - Cb = ${ethDiff}`;
+    return admin.database().ref(`${pageId}`).once('value');
+  }).then((snapshot) => {
+      const allUsers = snapshot.val();
+      const replyObj = {
+        recipient: { id: 'some_id' },
+        message: { text },
+      };
+      // Create axios post for each user.
+      const requests = Object.keys(allUsers).reduce((result, id) => {
+        if (allUsers[id].subscription) {
+          const newReply = Object.assign(replyObj, { recipient: { id } });
+          return [...result, axios.post(url, newReply)];
+        }
+        return result;
+      }, []);
+      return axios.all(requests);
+  }).then(() => res.send('success'));
+});
