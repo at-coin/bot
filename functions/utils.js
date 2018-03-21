@@ -87,6 +87,7 @@ const calProfits = (balances, buys, sells, buyPrices) => {
 }
 
 const getBalancesAndRecordToDb = (exApi, dbPath) => {
+  console.log(`getBalancesAndRecordToDb for ${exApi.constructor.name}`);
   return exApi.getBalances()
     .catch((err) => {
       console.error(err);

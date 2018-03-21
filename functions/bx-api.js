@@ -135,6 +135,7 @@ class BxApi {
 
   getBuyPrice(currencyPair) {
     const url = `${BX_API_URL}/`;
+    console.log(`Bx.getBuyPrice for ${currencyPair}`);
     return axios.get(url)
       .then(res => {
         const pairs = res.data;

@@ -20,16 +20,21 @@ const mywallet = new MyWalletApi(config.mywallet.account, config.mywallet.api_ke
 admin.initializeApp(functions.config().firebase);
 
 // Convenient function to get exchange rate.
-const getExchangeRates = () => axios.get('http://api.fixer.io/latest?base=THB').then((res) => {
-  fx.base = res.data.base;
-  fx.rates = res.data.rates;
-  const SGD = fx(1).from('SGD').to('THB');
-  const USD = fx(1).from('USD').to('THB');
-  return { SGD, USD };
-});
+const getExchangeRates = () => {
+  console.log('getExchangeRates');
+  return axios.get('http://api.fixer.io/latest?base=THB').then((res) => {
+    fx.base = res.data.base;
+    fx.rates = res.data.rates;
+    const SGD = fx(1).from('SGD').to('THB');
+    const USD = fx(1).from('USD').to('THB');
+    return { SGD, USD };
+  });
+}
 
 // Get bitfinex ticker
-const getBitfinexTickers = () => axios.get('https://api.bitfinex.com/v2/tickers?symbols=tBTCUSD,tETHUSD,tLTCUSD,tOMGUSD')
+const getBitfinexTickers = () => {
+  console.log('Bitfinex.getBitfinexTickers');
+  return axios.get('https://api.bitfinex.com/v2/tickers?symbols=tBTCUSD,tETHUSD,tLTCUSD,tOMGUSD')
   .then((res) => {
     const { data } = res;
     return {
@@ -47,6 +52,7 @@ const getBitfinexTickers = () => axios.get('https://api.bitfinex.com/v2/tickers?
       },
     };
   });
+}
 
 // Facebook command list as a quick reply
 /* eslint-disable camelcase */
