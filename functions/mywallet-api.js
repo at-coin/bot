@@ -10,8 +10,11 @@ class MyWalletApi {
   }
 
   convertWeiToFloat(wei) {
-    return wei.substr(0, wei.length - 18) +
+    if (wei === '0') return 0;
+    const normal_unit = wei.substr(0, wei.length - 18) +
       '.' + wei.substr(wei.length - 18, wei.length - 15);
+    console.log(`[MyWalletApi] Convert ${wei} wei to ${normal_unit}`);
+    return normal_unit;
   }
 
   getBalances() {
@@ -26,6 +29,7 @@ class MyWalletApi {
       const params = Object.assign({}, baseParams, {
           contractaddress: token.address,
       });
+      console.log(`[MyWalletApi] getBalances for ${token.symbol} (${token.address})`);
       return axios.get(ETHERSCAN_URL, { params })
         .then(result => ({ [token.symbol]: this.convertWeiToFloat(result.data.result) }));
     });
