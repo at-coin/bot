@@ -21,5 +21,8 @@
   },
   "ifttt": {
     "access_token": ""
+  },
+  "abitrage":{
+    "eth":""
   }
 }

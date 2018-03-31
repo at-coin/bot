@@ -306,6 +306,11 @@ exports.checkEthAbitrage = functions.https.onRequest((req, res) => {
     return res.send(401);
   }
 
+  if (!config.abitrage && !config.abitrage.eth) {
+    console.log('Config for abitrage is not properly set');
+    return res.send(401);
+  }
+  const abitrageRange = config.abitrage.eth;
   let text = '';
   const wantedCoin =  'ETH';
   let promises = [
@@ -321,7 +326,7 @@ exports.checkEthAbitrage = functions.https.onRequest((req, res) => {
   }
   Promise.all(promises).then(([bxObj, bfObj, rates, cbObj]) => {
     const ethDiff = bxObj.last_price - cbObj.data.amount * rates.SGD;
-    if (ethDiff < 1000) throw Error('Check eth diff but Diff is less than 1000. Message will not be sent out.');
+    if (ethDiff < abitrageRange) throw Error('Check eth diff but Diff is less than 1000. Message will not be sent out.');
     text = stripIndent`
           The latest ${wantedCoin} prices are:
           [THB]
