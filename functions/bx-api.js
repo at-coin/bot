@@ -41,11 +41,14 @@ class BxApi {
       } = elem;
       table[date] = table[date] || {};
       table[date]['created_at'] = date;
+      table[date]['source'] = 'bx';
       amount = parseFloat(amount);
       const negativeAmount = (amount < 0);
       amount = Math.abs(amount);
       if (type === 'fee') {
         table[date][type] = { amount, currency };
+        table[date]['amount'] = { amount, currency };
+        table[date]['curreny'] = currency;
       } else if (type === 'trade'){
         // TODO: Support more than just THB transactions
         if (currency === 'THB') {
@@ -61,19 +64,26 @@ class BxApi {
         table[date]['currency'] = currency;
         table[date]['amount'] = { amount, currency };
       }
-      // TODO: Just assign 0-value to fee if not exists.
-      // Find total; Sometimes, fee is missing. We will just ignore it.
-      if ('fee' in table[date] && 'subtotal' in table[date]) {
-        table[date]['native_amount'] = {
-          amount: (table[date].fee.amount + table[date].subtotal.amount),
-          currency: table[date].subtotal.currency,
-        }
-      }
       return table;
     }, {});
+
+
     // Change back to array;
-    const array = Object.keys(timeTable).reduce((result, key) => {
-      result.push(timeTable[key]);
+    // Also, find total; Sometimes, fee is missing.
+    // We will just ignore by setting it to 0 for now.
+    const array = Object.keys(timeTable).reduce((result, date) => {
+      // conclude transactions w/ subtotal (type === sell, buy)
+      if ('subtotal' in timeTable[date]) {
+        // if having subtotal w/o fee, just set fee to 0.
+        if (!('fee' in timeTable[date])) {
+          timeTable[date]['fee'] = { amount: 0, currency: 'THB' };
+        }
+        timeTable[date]['native_amount'] = {
+          amount: (timeTable[date].fee.amount + timeTable[date].subtotal.amount),
+          currency: timeTable[date].subtotal.currency,
+        }
+      }
+      result.push(timeTable[date]);
       return result;
     }, []);
     return array;
@@ -135,7 +145,6 @@ class BxApi {
 
   getBuyPrice(currencyPair) {
     const url = `${BX_API_URL}/`;
-    console.log(`[BxApi].getBuyPrice for ${currencyPair}`);
     return axios.get(url)
       .then(res => {
         const pairs = res.data;
@@ -148,6 +157,7 @@ class BxApi {
           allBuyPrices[primary][secondary] = value;
         });
         if (currencyPair) {
+          console.log(`[BxApi].getBuyPrice for ${currencyPair}.`);
           const primary = currencyPair.split('-')[0];
           const secondary = currencyPair.split('-')[1];
           if (!(primary in allBuyPrices) ||
@@ -155,6 +165,8 @@ class BxApi {
             return undefined;
           }
           return allBuyPrices[primary][secondary];
+        } else {
+          console.log(`[BxApi].getBuyPrice for all currencies.`);
         }
         return allBuyPrices;
       });

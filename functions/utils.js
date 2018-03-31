@@ -4,6 +4,7 @@ const _ = require('lodash');
 const summarizeCoinTransactions = (transactions) => {
   return transactions.reduce((result, one) => {
     const { type } = one;
+    console.log(`[utils] summarizeCoinTransactions reducing`, one);
     if(type === 'buy' || type === 'sell') {
       const {currency, amount} = one.native_amount;
       result[type] = result[type] || {};
@@ -87,10 +88,11 @@ const calProfits = (balances, buys, sells, buyPrices) => {
 }
 
 const getBalancesAndRecordToDb = (exApi, dbPath) => {
-  console.log(`getBalancesAndRecordToDb for ${exApi.constructor.name}`);
+  const apiName = exApi.constructor.name;
+  console.log(`getBalancesAndRecordToDb for ${apiName}`);
   return exApi.getBalances()
     .catch((err) => {
-      console.error(err);
+      console.error(`[utils].getBalancesAndRecordToDb(${apiName})`, err);
       return {};
     })
     .then((oldBalances) => {
