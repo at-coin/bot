@@ -108,6 +108,25 @@ class BxApi {
       [currency]: currencySum,
     };
   }
+  
+  createBxOrder(pairing, type, amount, rate) {   
+    const url = `${BX_API_URL}order/`;
+    const unixTime = Date.now() * 1000;
+    return axios.post(url, qs.stringify({
+      key: this.apiKey,
+      nonce: unixTime,
+      signature: this.getSignature(unixTime),
+      pairing: pairing,
+      type: type,
+      amount: amount,
+      rate: rate
+    })).then({success: success, order_id: order_id, error: error}  => {
+      if (!success) throw error;
+      return order_id;
+    }).catch(e => {
+      return e;
+    });
+  }
 
   getAllTransactions() {
     const url = `${BX_API_URL}/history/`;
